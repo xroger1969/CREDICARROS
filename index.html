@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Simulador Crédito Automóvel</title>
+  <style>
+    :root{
+      --green:#9bc23b;
+      --green-dark:#2f6b26;
+      --green-mid:#7fb52f;
+      --soft:#e7f0c6;
+      --text:#1f2a15;
+      --white:#ffffff;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:#f4f7ea;color:var(--text)}
+    .wrap{max-width:980px;margin:32px auto;padding:0 16px}
+    .panel{background:var(--white);border-radius:18px;box-shadow:0 12px 30px rgba(0,0,0,0.08);overflow:hidden}
+    .section{display:grid;grid-template-columns:1.2fr 1fr;align-items:center;padding:18px 22px;gap:18px}
+    .section + .section{border-top:6px solid var(--green)}
+    .section.green{background:var(--green)}
+    .section.light{background:var(--soft)}
+    h2{margin:0;font-size:28px;color:var(--white)}
+    .section.light h2{color:var(--green-dark)}
+    .sub{margin:6px 0 0;font-size:18px;color:#2b4a1f;font-weight:600}
+    .section.green .sub{color:#2c5d1f}
+    .control{display:flex;align-items:center;justify-content:flex-end;gap:12px}
+    .control button{width:36px;height:36px;border-radius:50%;border:2px solid var(--green-dark);background:transparent;font-weight:bold;color:var(--green-dark);font-size:18px;cursor:pointer}
+    .value{background:var(--white);border-radius:10px;padding:10px 16px;min-width:160px;text-align:center;border:2px solid var(--green-dark);font-size:22px;font-weight:700;color:var(--green-dark)}
+    .value small{display:block;font-size:13px;font-weight:600;color:#3d6b2f}
+    .slider-wrap{display:flex;align-items:center;gap:12px}
+    input[type=\"range\"]{width:100%;accent-color:var(--green-dark)}
+    .inputs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+    label{display:block;font-size:13px;color:#365927;font-weight:600;margin-bottom:6px}
+    input[type=\"number\"]{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #c6d7a5;font-size:16px}
+    .note{margin-top:14px;font-size:12px;color:#50613e}
+    @media (max-width:760px){
+      .section{grid-template-columns:1fr}
+      .control{justify-content:flex-start}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <div class="section green">
+        <div>
+          <h2>O montante que preciso</h2>
+          <div class="sub">De 2.500€ até 75.000€</div>
+        </div>
+        <div class="control">
+          <button type="button" onclick="stepMontante(-500)">−</button>
+          <div class="value" id="montanteLabel">2.500 €</div>
+          <button type="button" onclick="stepMontante(500)">+</button>
+        </div>
+      </div>
+
+      <div class="section light">
+        <div>
+          <h2>A minha mensalidade desde</h2>
+          <div class="sub">Mensalidade mínima aplicada a esta simulação</div>
+        </div>
+        <div class="control">
+          <button type="button" onclick="stepPrestacao(-5)">−</button>
+          <div class="value" id="prestacaoLabel">—</div>
+          <button type="button" onclick="stepPrestacao(5)">+</button>
+        </div>
+      </div>
+
+      <div class="section green">
+        <div>
+          <h2>Em quantos meses</h2>
+          <div class="sub">De 60 a 120 meses</div>
+        </div>
+        <div class="control slider-wrap">
+          <button type="button" onclick="stepPrazo(-12)">−</button>
+          <input type="range" id="prazo" min="60" max="120" step="12" value="60" />
+          <button type="button" onclick="stepPrazo(12)">+</button>
+          <div class="value" id="prazoLabel">60 MESES<small>5 anos</small></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="inputs">
+      <div>
+        <label for="pvp">PVP (€)</label>
+        <input type="number" id="pvp" min="2500" max="75000" step="100" value="2500" />
+      </div>
+      <div>
+        <label for="entrada">Entrada inicial (€)</label>
+        <input type="number" id="entrada" min="0" max="75000" step="100" value="0" />
+      </div>
+    </div>
+    <div class="note">TAN base aplicada: 11% ao ano.</div>
+  </div>
+
+  <script>
+    const TAN_BASE = 0.11;
+    const montanteLabel = document.getElementById('montanteLabel');
+    const prestacaoLabel = document.getElementById('prestacaoLabel');
+    const prazo = document.getElementById('prazo');
+    const prazoLabel = document.getElementById('prazoLabel');
+    const pvp = document.getElementById('pvp');
+    const entrada = document.getElementById('entrada');
+
+    const formatEUR = value => value.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' });
+
+    function clamp(value, min, max){
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function getMontante(){
+      const total = Number(pvp.value || 0) - Number(entrada.value || 0);
+      return clamp(total, 2500, 75000);
+    }
+
+    function updateMontante(){
+      const montante = getMontante();
+      montanteLabel.textContent = formatEUR(montante);
+      pvp.value = clamp(Number(pvp.value || 0), 2500, 75000);
+      entrada.value = clamp(Number(entrada.value || 0), 0, 75000);
+      updatePrestacao();
+    }
+
+    function updatePrazo(){
+      const meses = Number(prazo.value);
+      const anos = Math.round(meses / 12);
+      prazoLabel.innerHTML = `${meses} MESES<small>${anos} anos</small>`;
+      updatePrestacao();
+    }
+
+    function calcPrestacao(){
+      const montante = getMontante();
+      const meses = Number(prazo.value);
+      const i = TAN_BASE / 12;
+      if(i === 0) return montante / meses;
+      const numerador = i * Math.pow(1 + i, meses);
+      const denominador = Math.pow(1 + i, meses) - 1;
+      return montante * (numerador / denominador);
+    }
+
+    function updatePrestacao(){
+      const prestacao = calcPrestacao();
+      prestacaoLabel.textContent = formatEUR(prestacao);
+    }
+
+    function stepMontante(delta){
+      const novo = clamp(getMontante() + delta, 2500, 75000);
+      pvp.value = novo + Number(entrada.value || 0);
+      updateMontante();
+    }
+
+    function stepPrestacao(delta){
+      const prestacaoAtual = calcPrestacao();
+      const alvo = Math.max(0, prestacaoAtual + delta);
+      const meses = Number(prazo.value);
+      const i = TAN_BASE / 12;
+      let montante = 0;
+      if(i === 0){
+        montante = alvo * meses;
+      } else {
+        const fator = (Math.pow(1 + i, meses) - 1) / (i * Math.pow(1 + i, meses));
+        montante = alvo * fator;
+      }
+      pvp.value = clamp(montante + Number(entrada.value || 0), 2500, 75000);
+      updateMontante();
+    }
+
+    function stepPrazo(delta){
+      const novo = clamp(Number(prazo.value) + delta, 60, 120);
+      prazo.value = novo;
+      updatePrazo();
+    }
+
+    pvp.addEventListener('input', updateMontante);
+    entrada.addEventListener('input', updateMontante);
+    prazo.addEventListener('input', updatePrazo);
+
+    updateMontante();
+    updatePrazo();
+  </script>
+</body>
+</html>
