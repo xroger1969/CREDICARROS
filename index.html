@@ -6,15 +6,15 @@
   <title>Simulador Crédito Automóvel</title>
   <style>
     :root{
-      --green:#9bc23b;
-      --green-dark:#2f6b26;
-      --green-mid:#7fb52f;
-      --soft:#e7f0c6;
-      --text:#1f2a15;
+      --green:#5ba9e1;
+      --green-dark:#1f4f8a;
+      --green-mid:#3f85c4;
+      --soft:#e3f0fb;
+      --text:#12253d;
       --white:#ffffff;
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:#f4f7ea;color:var(--text)}
+    body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:#eef4fb;color:var(--text)}
     .wrap{max-width:980px;margin:32px auto;padding:0 16px}
     .panel{background:var(--white);border-radius:18px;box-shadow:0 12px 30px rgba(0,0,0,0.08);overflow:hidden}
     .section{display:grid;grid-template-columns:1.2fr 1fr;align-items:center;padding:18px 22px;gap:18px}
@@ -23,18 +23,18 @@
     .section.light{background:var(--soft)}
     h2{margin:0;font-size:28px;color:var(--white)}
     .section.light h2{color:var(--green-dark)}
-    .sub{margin:6px 0 0;font-size:18px;color:#2b4a1f;font-weight:600}
-    .section.green .sub{color:#2c5d1f}
+    .sub{margin:6px 0 0;font-size:18px;color:#1f3f5e;font-weight:600}
+    .section.green .sub{color:#224a73}
     .control{display:flex;align-items:center;justify-content:flex-end;gap:12px}
     .control button{width:36px;height:36px;border-radius:50%;border:2px solid var(--green-dark);background:transparent;font-weight:bold;color:var(--green-dark);font-size:18px;cursor:pointer}
     .value{background:var(--white);border-radius:10px;padding:10px 16px;min-width:160px;text-align:center;border:2px solid var(--green-dark);font-size:22px;font-weight:700;color:var(--green-dark)}
-    .value small{display:block;font-size:13px;font-weight:600;color:#3d6b2f}
+    .value small{display:block;font-size:13px;font-weight:600;color:#2c5f92}
     .slider-wrap{display:flex;align-items:center;gap:12px}
     input[type="range"]{width:100%;accent-color:var(--green-dark)}
     .inputs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
-    label{display:block;font-size:13px;color:#365927;font-weight:600;margin-bottom:6px}
-    input[type="number"]{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #c6d7a5;font-size:16px}
-    .note{margin-top:14px;font-size:12px;color:#50613e}
+    label{display:block;font-size:13px;color:#274b72;font-weight:600;margin-bottom:6px}
+    input[type="number"]{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #bcd3ea;font-size:16px}
+    .note{margin-top:14px;font-size:12px;color:#496483}
     @media (max-width:760px){
       .section{grid-template-columns:1fr}
       .control{justify-content:flex-start}
