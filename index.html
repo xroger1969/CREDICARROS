@@ -6,35 +6,44 @@
   <title>Simulador Crédito Automóvel</title>
   <style>
     :root{
-      --green:#5ba9e1;
-      --green-dark:#1f4f8a;
-      --green-mid:#3f85c4;
-      --soft:#e3f0fb;
-      --text:#12253d;
+      --blue-900:#0b1731;
+      --blue-800:#102447;
+      --blue-700:#16335f;
+      --blue-600:#1d4476;
+      --blue-500:#2a5b9a;
+      --blue-300:#9fb7d9;
+      --silver:#e6ebf2;
+      --soft:#d9e3f2;
+      --text:#0f1e33;
       --white:#ffffff;
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:#eef4fb;color:var(--text)}
+    body{
+      margin:0;
+      font-family:"Segoe UI",Arial,sans-serif;
+      background:radial-gradient(circle at top left, #1f4d86 0%, #14325f 40%, #0a162d 100%);
+      color:var(--text)
+    }
     .wrap{max-width:980px;margin:32px auto;padding:0 16px}
-    .panel{background:var(--white);border-radius:18px;box-shadow:0 12px 30px rgba(0,0,0,0.08);overflow:hidden}
+    .panel{background:var(--white);border-radius:18px;box-shadow:0 20px 40px rgba(5,12,24,0.35);overflow:hidden}
     .section{display:grid;grid-template-columns:1.2fr 1fr;align-items:center;padding:18px 22px;gap:18px}
-    .section + .section{border-top:6px solid var(--green)}
-    .section.green{background:var(--green)}
+    .section + .section{border-top:6px solid var(--blue-700)}
+    .section.green{background:linear-gradient(135deg, var(--blue-700), var(--blue-500))}
     .section.light{background:var(--soft)}
     h2{margin:0;font-size:28px;color:var(--white)}
-    .section.light h2{color:var(--green-dark)}
-    .sub{margin:6px 0 0;font-size:18px;color:#1f3f5e;font-weight:600}
-    .section.green .sub{color:#224a73}
+    .section.light h2{color:var(--blue-800)}
+    .sub{margin:6px 0 0;font-size:18px;color:var(--blue-700);font-weight:600}
+    .section.green .sub{color:var(--blue-300)}
     .control{display:flex;align-items:center;justify-content:flex-end;gap:12px}
-    .control button{width:36px;height:36px;border-radius:50%;border:2px solid var(--green-dark);background:transparent;font-weight:bold;color:var(--green-dark);font-size:18px;cursor:pointer}
-    .value{background:var(--white);border-radius:10px;padding:10px 16px;min-width:160px;text-align:center;border:2px solid var(--green-dark);font-size:22px;font-weight:700;color:var(--green-dark)}
-    .value small{display:block;font-size:13px;font-weight:600;color:#2c5f92}
+    .control button{width:36px;height:36px;border-radius:50%;border:2px solid var(--blue-700);background:transparent;font-weight:bold;color:var(--blue-700);font-size:18px;cursor:pointer}
+    .value{background:var(--silver);border-radius:10px;padding:10px 16px;min-width:160px;text-align:center;border:2px solid var(--blue-700);font-size:22px;font-weight:700;color:var(--blue-800)}
+    .value small{display:block;font-size:13px;font-weight:600;color:var(--blue-600)}
     .slider-wrap{display:flex;align-items:center;gap:12px}
-    input[type="range"]{width:100%;accent-color:var(--green-dark)}
+    input[type="range"]{width:100%;accent-color:var(--blue-700)}
     .inputs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
-    label{display:block;font-size:13px;color:#274b72;font-weight:600;margin-bottom:6px}
-    input[type="number"]{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #bcd3ea;font-size:16px}
-    .note{margin-top:14px;font-size:12px;color:#496483}
+    label{display:block;font-size:13px;color:var(--silver);font-weight:600;margin-bottom:6px}
+    input[type="number"]{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #b0c1da;font-size:16px;background:var(--silver);color:var(--blue-800)}
+    .note{margin-top:14px;font-size:12px;color:#c6d3e6}
     @media (max-width:760px){
       .section{grid-template-columns:1fr}
       .control{justify-content:flex-start}
