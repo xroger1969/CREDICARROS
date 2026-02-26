@@ -60,11 +60,11 @@
       <div class="section green">
         <div>
           <h2>O montante que preciso</h2>
-          <div class="sub">De 2.500€ até 75.000€</div>
+          <div class="sub">De 0€ até 75.000€</div>
         </div>
         <div class="control">
           <button type="button" onclick="stepMontante(-500)">−</button>
-          <div class="value" id="montanteLabel">2.500 €</div>
+          <div class="value" id="montanteLabel">0 €</div>
           <button type="button" onclick="stepMontante(500)">+</button>
         </div>
       </div>
@@ -98,7 +98,7 @@
     <div class="inputs">
       <div>
         <label for="pvp">PVP (€)</label>
-        <input type="number" id="pvp" min="2500" max="75000" step="500" />
+        <input type="number" id="pvp" min="0" max="75000" step="1" />
       </div>
       <div>
         <label for="entrada">Entrada inicial (€)</label>
@@ -106,7 +106,7 @@
       </div>
     </div>
 
-    <div class="note">Os valores das rendas apresentados são meramente indicativos.<br>Nota: despesas iniciais como o ISUC, comissão de abertura, seguros de vida e despesas de transferência de propriedade não estão incluídas no cálculo, que deve ser entendido como estando sujeito a alterações e atualizações.</div>
+    <div class="note">Os valores apresentados correspondem a uma simulação meramente indicativa, não constituindo proposta contratual.<br>Não estão incluídas despesas iniciais, nomeadamente ISUC, comissão de abertura, seguros de vida e encargos com a transferência de propriedade.<br>As condições apresentadas encontram-se sujeitas a análise de crédito, aprovação e eventuais atualizações das taxas e encargos aplicáveis.</div>
     </div>
 
     <div class="docs-info">
@@ -138,25 +138,25 @@
       return Math.max(min, Math.min(max, value));
     }
 
-    // Cetelem arredonda montantes para passos de 500 € (e mostra no input)
-    function roundMontante(total) {
-      return Math.ceil(total / 500) * 500;
-    }
-
     function getMontante() {
       const total = Number(pvp.value || 0) - Number(entrada.value || 0);
-      return clamp(roundMontante(total), 2500, 75000);
+      return clamp(total, 0, 75000);
     }
 
-    // TAN por prazo (degraus) observados no simulador
+    // TAN por prazo com acréscimo de +1 p.p.
     function getTAN(meses) {
-      if (meses <= 24) return 0.0950;
-      if (meses <= 48) return 0.1106;
-      if (meses <= 71) return 0.1181;
-      if (meses <= 80) return 0.1206;
-      if (meses <= 84) return 0.1215;
-      if (meses <= 96) return 0.1030;
-      return 0.1035;
+      if (meses <= 24) return 0.1050;
+      if (meses <= 48) return 0.1206;
+      if (meses <= 71) return 0.1281;
+      if (meses <= 80) return 0.1306;
+      if (meses <= 84) return 0.1315;
+      if (meses <= 96) return 0.1130;
+      return 0.1135;
+    }
+
+    // TAEG acompanha o ajuste de +1 p.p. pedido
+    function getTAEG(meses) {
+      return getTAN(meses) + 0.01;
     }
 
     // Prazo máximo depende do montante (observado no simulador)
@@ -181,13 +181,6 @@
 
     function updateMontante() {
       const montante = getMontante();
-
-      // alinhar PVP com montante arredondado (tipo Cetelem) para evitar inconsistências
-      const total = Number(pvp.value || 0) - Number(entrada.value || 0);
-      const montanteArred = roundMontante(total);
-      if (montanteArred !== total) {
-        pvp.value = montante + Number(entrada.value || 0);
-      }
 
       montanteLabel.textContent = formatEUR(montante);
       syncPrazoRange();
@@ -219,7 +212,7 @@
     }
 
     function stepMontante(delta) {
-      const novo = clamp(getMontante() + delta, 2500, 75000);
+      const novo = clamp(getMontante() + delta, 0, 75000);
       pvp.value = novo + Number(entrada.value || 0);
       updateMontante();
     }
@@ -238,7 +231,7 @@
         montante = alvo * fator;
       }
 
-      pvp.value = clamp(roundMontante(montante + Number(entrada.value || 0)), 2500, 75000);
+      pvp.value = clamp(montante + Number(entrada.value || 0), 0, 75000);
       updateMontante();
     }
 
