@@ -84,7 +84,7 @@
       <div class="section green">
         <div>
           <h2>Em quantos meses</h2>
-          <div class="sub">De 60 a 120 meses</div>
+          <div class="sub" id="prazoSub">De 60 a 120 meses</div>
         </div>
         <div class="control slider-wrap">
           <button type="button" onclick="stepPrazo(-12)">−</button>
@@ -98,15 +98,18 @@
     <div class="inputs">
       <div>
         <label for="pvp">PVP (€)</label>
-        <input type="number" id="pvp" min="2500" max="75000" step="100" />
+        <input type="number" id="pvp" min="2500" max="75000" step="500" />
       </div>
       <div>
         <label for="entrada">Entrada inicial (€)</label>
-        <input type="number" id="entrada" min="0" max="75000" step="100" />
+        <input type="number" id="entrada" min="0" max="75000" step="500" />
       </div>
     </div>
+
     <div class="note">Os valores das rendas apresentados são meramente indicativos.<br>Nota: despesas iniciais como o ISUC, comissão de abertura, seguros de vida e despesas de transferência de propriedade não estão incluídas no cálculo, que deve ser entendido como estando sujeito a alterações e atualizações.</div>
-    </div><div class="docs-info">
+    </div>
+
+    <div class="docs-info">
       <h3>DOCUMENTOS PARA FINANCIAMENTO</h3>
       <ul>
         <li>Cartão de cidadão do cliente e cônjuge</li>
@@ -119,77 +122,129 @@
   </div>
 
   <script>
-    const TAN_BASE = 0.11;
+    const PRAZO_MIN = 60;
+
     const montanteLabel = document.getElementById('montanteLabel');
     const prestacaoLabel = document.getElementById('prestacaoLabel');
     const prazo = document.getElementById('prazo');
     const prazoLabel = document.getElementById('prazoLabel');
+    const prazoSub = document.getElementById('prazoSub');
     const pvp = document.getElementById('pvp');
     const entrada = document.getElementById('entrada');
 
     const formatEUR = value => value.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' });
 
-    function clamp(value, min, max){
+    function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
     }
 
-    function getMontante(){
-      const total = Number(pvp.value || 0) - Number(entrada.value || 0);
-      return clamp(total, 2500, 75000);
+    // Cetelem arredonda montantes para passos de 500 € (e mostra no input)
+    function roundMontante(total) {
+      return Math.ceil(total / 500) * 500;
     }
 
-    function updateMontante(){
+    function getMontante() {
+      const total = Number(pvp.value || 0) - Number(entrada.value || 0);
+      return clamp(roundMontante(total), 2500, 75000);
+    }
+
+    // TAN por prazo (degraus) observados no simulador
+    function getTAN(meses) {
+      if (meses <= 24) return 0.0950;
+      if (meses <= 48) return 0.1106;
+      if (meses <= 71) return 0.1181;
+      if (meses <= 80) return 0.1206;
+      if (meses <= 84) return 0.1215;
+      if (meses <= 96) return 0.1030;
+      return 0.1035;
+    }
+
+    // Prazo máximo depende do montante (observado no simulador)
+    function getPrazoMax(montante) {
+      if (montante <= 5000) return 84;
+      if (montante <= 9500) return 96;
+      return 120;
+    }
+
+    function syncPrazoRange() {
       const montante = getMontante();
+      const maxMeses = getPrazoMax(montante);
+
+      prazo.max = maxMeses;
+      if (prazoSub) prazoSub.textContent = `De ${PRAZO_MIN} a ${maxMeses} meses`;
+
+      if (Number(prazo.value) > maxMeses) {
+        prazo.value = maxMeses;
+        updatePrazo();
+      }
+    }
+
+    function updateMontante() {
+      const montante = getMontante();
+
+      // alinhar PVP com montante arredondado (tipo Cetelem) para evitar inconsistências
+      const total = Number(pvp.value || 0) - Number(entrada.value || 0);
+      const montanteArred = roundMontante(total);
+      if (montanteArred !== total) {
+        pvp.value = montante + Number(entrada.value || 0);
+      }
+
       montanteLabel.textContent = formatEUR(montante);
+      syncPrazoRange();
       updatePrestacao();
     }
 
-    function updatePrazo(){
+    function updatePrazo() {
       const meses = Number(prazo.value);
       const anos = Math.round(meses / 12);
       prazoLabel.innerHTML = `${meses} MESES<small>${anos} anos</small>`;
       updatePrestacao();
     }
 
-    function calcPrestacao(){
+    function calcPrestacao() {
       const montante = getMontante();
       const meses = Number(prazo.value);
-      const i = TAN_BASE / 12;
-      if(i === 0) return montante / meses;
+      const i = getTAN(meses) / 12;
+
+      if (i === 0) return montante / meses;
+
       const numerador = i * Math.pow(1 + i, meses);
       const denominador = Math.pow(1 + i, meses) - 1;
       return montante * (numerador / denominador);
     }
 
-    function updatePrestacao(){
+    function updatePrestacao() {
       const prestacao = calcPrestacao();
       prestacaoLabel.textContent = formatEUR(prestacao);
     }
 
-    function stepMontante(delta){
+    function stepMontante(delta) {
       const novo = clamp(getMontante() + delta, 2500, 75000);
       pvp.value = novo + Number(entrada.value || 0);
       updateMontante();
     }
 
-    function stepPrestacao(delta){
+    function stepPrestacao(delta) {
       const prestacaoAtual = calcPrestacao();
       const alvo = Math.max(0, prestacaoAtual + delta);
       const meses = Number(prazo.value);
-      const i = TAN_BASE / 12;
+      const i = getTAN(meses) / 12;
+
       let montante = 0;
-      if(i === 0){
+      if (i === 0) {
         montante = alvo * meses;
       } else {
         const fator = (Math.pow(1 + i, meses) - 1) / (i * Math.pow(1 + i, meses));
         montante = alvo * fator;
       }
-      pvp.value = clamp(montante + Number(entrada.value || 0), 2500, 75000);
+
+      pvp.value = clamp(roundMontante(montante + Number(entrada.value || 0)), 2500, 75000);
       updateMontante();
     }
 
-    function stepPrazo(delta){
-      const novo = clamp(Number(prazo.value) + delta, 60, 120);
+    function stepPrazo(delta) {
+      const max = Number(prazo.max);
+      const novo = clamp(Number(prazo.value) + delta, PRAZO_MIN, max);
       prazo.value = novo;
       updatePrazo();
     }
