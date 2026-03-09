@@ -143,18 +143,20 @@
       return clamp(total, 0, 75000);
     }
 
+    const JUROS_INCREMENTO = 0.01;
+
     // TAN por prazo com acréscimo de +1 p.p.
     function getTAN(meses) {
-      if (meses <= 24) return 0.1050;
-      if (meses <= 48) return 0.1206;
-      if (meses <= 71) return 0.1281;
-      if (meses <= 80) return 0.1306;
-      if (meses <= 84) return 0.1315;
-      if (meses <= 96) return 0.1130;
-      return 0.1135;
+      if (meses <= 24) return 0.1050 + JUROS_INCREMENTO;
+      if (meses <= 48) return 0.1206 + JUROS_INCREMENTO;
+      if (meses <= 71) return 0.1281 + JUROS_INCREMENTO;
+      if (meses <= 80) return 0.1306 + JUROS_INCREMENTO;
+      if (meses <= 84) return 0.1315 + JUROS_INCREMENTO;
+      if (meses <= 96) return 0.1130 + JUROS_INCREMENTO;
+      return 0.1135 + JUROS_INCREMENTO;
     }
 
-    // TAEG acompanha o ajuste de +1 p.p. pedido
+    // TAEG mantém o diferencial sobre a TAN após o ajuste pedido.
     function getTAEG(meses) {
       return getTAN(meses) + 0.01;
     }
