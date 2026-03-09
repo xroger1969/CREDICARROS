@@ -41,8 +41,6 @@
     .slider-wrap{display:flex;align-items:center;gap:12px}
     input[type="range"]{width:100%;accent-color:var(--blue-700)}
     .inputs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
-    .inputs.rates{margin-top:12px}
-    .inputs.rates .full{grid-column:1 / -1}
     label{display:block;font-size:13px;color:var(--silver);font-weight:600;margin-bottom:6px}
     input[type="number"]{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #b0c1da;font-size:16px;background:var(--silver);color:var(--blue-800)}
     .note{margin-top:14px;font-size:12px;color:#c6d3e6}
@@ -108,24 +106,6 @@
       </div>
     </div>
 
-    <div class="inputs rates">
-      <div class="full">
-        <label for="taxMode">Modo de taxa</label>
-        <select id="taxMode">
-          <option value="auto">Automático (por prazo)</option>
-          <option value="manual">Manual</option>
-        </select>
-      </div>
-      <div>
-        <label for="tanManual">TAN manual (%)</label>
-        <input type="number" id="tanManual" min="0" max="100" step="0.01" value="13.35" disabled />
-      </div>
-      <div>
-        <label for="taegManual">TAEG manual (%)</label>
-        <input type="number" id="taegManual" min="0" max="100" step="0.01" value="14.35" disabled />
-      </div>
-    </div>
-
     <div class="note">Os valores apresentados correspondem a uma simulação meramente indicativa, não constituindo proposta contratual.<br>Não estão incluídas despesas iniciais, nomeadamente ISUC, comissão de abertura, seguros de vida e encargos com a transferência de propriedade.<br>As condições apresentadas encontram-se sujeitas a análise de crédito, aprovação e eventuais atualizações das taxas e encargos aplicáveis.</div>
     </div>
 
@@ -151,9 +131,6 @@
     const prazoSub = document.getElementById('prazoSub');
     const pvp = document.getElementById('pvp');
     const entrada = document.getElementById('entrada');
-    const taxMode = document.getElementById('taxMode');
-    const tanManual = document.getElementById('tanManual');
-    const taegManual = document.getElementById('taegManual');
 
     const formatEUR = value => value.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' });
 
@@ -170,10 +147,6 @@
 
     // TAN por prazo com acréscimo total de +2 p.p.
     function getTAN(meses) {
-      if (taxMode.value === 'manual') {
-        return clamp(Number(tanManual.value || 0) / 100, 0, 1);
-      }
-
       if (meses <= 24) return 0.1050 + JUROS_INCREMENTO;
       if (meses <= 48) return 0.1206 + JUROS_INCREMENTO;
       if (meses <= 71) return 0.1281 + JUROS_INCREMENTO;
@@ -181,22 +154,6 @@
       if (meses <= 84) return 0.1315 + JUROS_INCREMENTO;
       if (meses <= 96) return 0.1130 + JUROS_INCREMENTO;
       return 0.1135 + JUROS_INCREMENTO;
-    }
-
-    // TAEG mantém o diferencial sobre a TAN após o ajuste pedido.
-    function getTAEG(meses) {
-      if (taxMode.value === 'manual') {
-        return clamp(Number(taegManual.value || 0) / 100, 0, 1);
-      }
-
-      return getTAN(meses) + 0.01;
-    }
-
-    function updateTaxMode() {
-      const isManual = taxMode.value === 'manual';
-      tanManual.disabled = !isManual;
-      taegManual.disabled = !isManual;
-      updatePrestacao();
     }
 
     // Prazo máximo depende do montante (observado no simulador)
@@ -285,13 +242,9 @@
     pvp.addEventListener('input', updateMontante);
     entrada.addEventListener('input', updateMontante);
     prazo.addEventListener('input', updatePrazo);
-    taxMode.addEventListener('change', updateTaxMode);
-    tanManual.addEventListener('input', updatePrestacao);
-    taegManual.addEventListener('input', updatePrestacao);
 
     updateMontante();
     updatePrazo();
-    updateTaxMode();
   </script>
 </body>
 </html>
