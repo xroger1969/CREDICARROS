@@ -143,9 +143,9 @@
       return clamp(total, 0, 75000);
     }
 
-    const JUROS_INCREMENTO = 0.01;
+    const JUROS_INCREMENTO = 0.02;
 
-    // TAN por prazo com acréscimo de +1 p.p.
+    // TAN por prazo com acréscimo total de +2 p.p.
     function getTAN(meses) {
       if (meses <= 24) return 0.1050 + JUROS_INCREMENTO;
       if (meses <= 48) return 0.1206 + JUROS_INCREMENTO;
