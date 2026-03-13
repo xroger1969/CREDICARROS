@@ -49,13 +49,6 @@
     .docs-info h3{margin:0 0 10px;font-size:18px;color:var(--blue-700)}
     .docs-info ul{margin:0;padding-left:20px;display:grid;gap:8px}
     .docs-info li{line-height:1.35}
-    .comparison{margin-top:18px;background:var(--white);border:1px solid #b0c1da;border-radius:14px;padding:16px 18px;color:var(--blue-800)}
-    .comparison h3{margin:0;font-size:20px;color:var(--blue-700)}
-    .comparison .inputs{margin-top:14px}
-    .comparison-output{margin-top:16px;background:var(--soft);border-radius:12px;padding:14px}
-    .comparison-output h4{margin:0 0 12px;color:var(--blue-800)}
-    .comparison-output p{margin:8px 0;font-weight:600}
-    .validation-message{min-height:18px;margin:4px 0 0;font-size:12px;color:#b33a3a}
     @media (max-width:760px){
       .section{grid-template-columns:1fr}
       .control{justify-content:flex-start}
@@ -117,44 +110,6 @@
 
     <div class="note">Os valores apresentados correspondem a uma simulação meramente indicativa, não constituindo proposta contratual.<br>Não estão incluídas despesas iniciais, nomeadamente ISUC, comissão de abertura, seguros de vida e encargos com a transferência de propriedade.<br>As condições apresentadas encontram-se sujeitas a análise de crédito, aprovação e eventuais atualizações das taxas e encargos aplicáveis.</div>
 
-    <div class="comparison">
-      <h3>COMPARAÇÃO COM VIATURA DE COMBUSTÃO</h3>
-      <div class="inputs">
-        <div>
-          <label for="consumoEletrico">Consumo do carro elétrico (kWh/100 km)</label>
-          <input type="number" id="consumoEletrico" min="0" step="0.1" placeholder="Ex.: 16" />
-        </div>
-        <div>
-          <label for="precoEletricidade">Preço da eletricidade (€/kWh)</label>
-          <input type="number" id="precoEletricidade" min="0" step="0.01" placeholder="Ex.: 0.18" />
-        </div>
-        <div>
-          <label for="tipoCombustivel">Tipo de combustível (opcional)</label>
-          <select id="tipoCombustivel">
-            <option value="">Selecionar</option>
-            <option value="Gasolina">Gasolina</option>
-            <option value="Gasóleo">Gasóleo</option>
-          </select>
-        </div>
-        <div>
-          <label for="precoCombustivel">Preço do combustível (€/litro)</label>
-          <input type="number" id="precoCombustivel" min="0" step="0.01" placeholder="Ex.: 1.65" />
-        </div>
-        <div>
-          <label for="consumoCombustao">Consumo da viatura de combustão (L/100 km)</label>
-          <input type="number" id="consumoCombustao" min="0" step="0.1" placeholder="Ex.: 6" />
-        </div>
-      </div>
-
-      <p id="comparisonValidation" class="validation-message"></p>
-
-      <div class="comparison-output">
-        <h4>COMPARAÇÃO DE CUSTO POR 100 KM</h4>
-        <p>Custo do carro elétrico por 100 km: <strong id="custoEletrico100km">0,00 €</strong></p>
-        <p>Custo do carro a combustão por 100 km: <strong id="custoCombustao100km">0,00 €</strong></p>
-        <p>Diferença / poupança por 100 km: <strong id="poupanca100km">0,00 €</strong></p>
-      </div>
-    </div>
     </div>
 
     <div class="docs-info">
@@ -179,15 +134,6 @@
     const prazoSub = document.getElementById('prazoSub');
     const pvp = document.getElementById('pvp');
     const entrada = document.getElementById('entrada');
-    const consumoEletrico = document.getElementById('consumoEletrico');
-    const precoEletricidade = document.getElementById('precoEletricidade');
-    const tipoCombustivel = document.getElementById('tipoCombustivel');
-    const precoCombustivel = document.getElementById('precoCombustivel');
-    const consumoCombustao = document.getElementById('consumoCombustao');
-    const comparisonValidation = document.getElementById('comparisonValidation');
-    const custoEletrico100kmLabel = document.getElementById('custoEletrico100km');
-    const custoCombustao100kmLabel = document.getElementById('custoCombustao100km');
-    const poupanca100kmLabel = document.getElementById('poupanca100km');
 
     const formatEUR = value => value.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' });
 
@@ -296,49 +242,12 @@
       updatePrazo();
     }
 
-    function parsePositiveValue(input) {
-      const value = Number(input.value);
-      return Number.isFinite(value) && value > 0 ? value : null;
-    }
-
-    function updateComparison() {
-      const consumoEletricoValor = parsePositiveValue(consumoEletrico);
-      const precoEletricidadeValor = parsePositiveValue(precoEletricidade);
-      const precoCombustivelValor = parsePositiveValue(precoCombustivel);
-      const consumoCombustaoValor = parsePositiveValue(consumoCombustao);
-
-      if (!consumoEletricoValor || !precoEletricidadeValor || !precoCombustivelValor || !consumoCombustaoValor) {
-        comparisonValidation.textContent = 'Preencha os consumos e preços com valores válidos (maiores que zero).';
-        custoEletrico100kmLabel.textContent = formatEUR(0);
-        custoCombustao100kmLabel.textContent = formatEUR(0);
-        poupanca100kmLabel.textContent = formatEUR(0);
-        return;
-      }
-
-      const custoEletrico100km = consumoEletricoValor * precoEletricidadeValor;
-      const custoCombustao100km = consumoCombustaoValor * precoCombustivelValor;
-      const poupanca100km = custoCombustao100km - custoEletrico100km;
-
-      comparisonValidation.textContent = tipoCombustivel.value
-        ? `Comparação calculada para viatura a ${tipoCombustivel.value.toLowerCase()}.`
-        : '';
-      custoEletrico100kmLabel.textContent = formatEUR(custoEletrico100km);
-      custoCombustao100kmLabel.textContent = formatEUR(custoCombustao100km);
-      poupanca100kmLabel.textContent = formatEUR(poupanca100km);
-    }
-
     pvp.addEventListener('input', updateMontante);
     entrada.addEventListener('input', updateMontante);
     prazo.addEventListener('input', updatePrazo);
-    consumoEletrico.addEventListener('input', updateComparison);
-    precoEletricidade.addEventListener('input', updateComparison);
-    tipoCombustivel.addEventListener('change', updateComparison);
-    precoCombustivel.addEventListener('input', updateComparison);
-    consumoCombustao.addEventListener('input', updateComparison);
 
     updateMontante();
     updatePrazo();
-    updateComparison();
   </script>
 </body>
 </html>
