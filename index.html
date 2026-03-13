@@ -357,6 +357,20 @@
 
     <main class="simulator-layout">
       <section class="card simulator-card">
+        <section class="card form-card">
+          <h3 class="card-title">Dados da simulação</h3>
+          <div class="inputs">
+            <div class="field">
+              <label for="pvp">PVP (€)</label>
+              <input type="number" id="pvp" min="0" max="75000" step="1" />
+            </div>
+            <div class="field">
+              <label for="entrada">Entrada inicial (€)</label>
+              <input type="number" id="entrada" min="0" max="75000" step="500" />
+            </div>
+          </div>
+        </section>
+
         <div class="section green">
           <div class="section-head">
             <h2>O montante que preciso</h2>
@@ -394,19 +408,6 @@
           </div>
         </div>
 
-        <section class="card form-card">
-          <h3 class="card-title">Dados da simulação</h3>
-          <div class="inputs">
-            <div class="field">
-              <label for="pvp">PVP (€)</label>
-              <input type="number" id="pvp" min="0" max="75000" step="1" />
-            </div>
-            <div class="field">
-              <label for="entrada">Entrada inicial (€)</label>
-              <input type="number" id="entrada" min="0" max="75000" step="500" />
-            </div>
-          </div>
-        </section>
       </section>
 
       <aside>
