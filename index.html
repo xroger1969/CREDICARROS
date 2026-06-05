@@ -505,7 +505,7 @@
     const entrada = document.getElementById('entrada');
 
     const formatEUR = value => value.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' });
-    const formatPercent = value => `${(value * 100).toFixed(1).replace('.', ',')}%`;
+    const formatPercent = (value, digits = 1) => `${(value * 100).toFixed(digits).replace('.', ',')}%`;
 
     function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
@@ -516,15 +516,22 @@
       return clamp(total, 0, MONTANTE_MAX);
     }
 
-    // Curva calibrada para crédito automóvel usado Cetelem.
-    function getTAN(meses) {
-      if (meses <= 24) return 0.0960;
-      if (meses <= 36) return 0.0975;
-      if (meses <= 48) return 0.0985;
-      if (meses <= 60) return 0.0990;
-      if (meses <= 84) return 0.1000;
-      if (meses <= 96) return 0.1008;
-      return 0.10144283700127782;
+    const TAN_CURVE = [
+      { months: 12, displayTan: 0.0960, calcTan: 0.0960 },
+      { months: 24, displayTan: 0.0960, calcTan: 0.0960 },
+      { months: 36, displayTan: 0.0975, calcTan: 0.0975 },
+      { months: 48, displayTan: 0.0985, calcTan: 0.0985 },
+      { months: 60, displayTan: 0.0990, calcTan: 0.0990 },
+      { months: 72, displayTan: 0.1025, calcTan: 0.10282873886881501 },
+      { months: 84, displayTan: 0.1025, calcTan: 0.10282873886881501 },
+      { months: 96, displayTan: 0.1010, calcTan: 0.10144283700127782 },
+      { months: 108, displayTan: 0.1010, calcTan: 0.10144283700127782 },
+      { months: 120, displayTan: 0.1010, calcTan: 0.10144283700127782 },
+    ];
+
+    // Curva calibrada com exemplos reais Cetelem: 12.000€/72m e 28.000€/120m.
+    function getTanConfig(meses) {
+      return TAN_CURVE.find(item => meses <= item.months) || TAN_CURVE[TAN_CURVE.length - 1];
     }
 
     // Prazo máximo depende do montante (observado no simulador)
@@ -575,11 +582,11 @@
       const meses = Number(prazo.value);
 
       if (montante <= 0) {
-        return { montante, meses, prestacao: 0, tan: getTAN(meses), taeg: NaN, mtic: 0 };
+        return { montante, meses, prestacao: 0, tan: getTanConfig(meses).displayTan, taeg: NaN, mtic: 0 };
       }
 
-      const tan = getTAN(meses);
-      const prestacaoBase = pmt(tan, meses, montante);
+      const tanConfig = getTanConfig(meses);
+      const prestacaoBase = pmt(tanConfig.calcTan, meses, montante);
       const jurosTotais = getJurosTotais(montante, meses, prestacaoBase);
       const seloJurosMensal = (jurosTotais * TAXA_SELO_JUROS) / meses;
       const prestacao = prestacaoBase + seloJurosMensal;
@@ -589,7 +596,7 @@
       const irrMensal = irr(cashflows);
       const taeg = Number.isFinite(irrMensal) ? Math.pow(1 + irrMensal, 12) - 1 : NaN;
 
-      return { montante, meses, prestacao, tan, taeg, mtic };
+      return { montante, meses, prestacao, tan: tanConfig.displayTan, taeg, mtic };
     }
 
     function syncPrazoRange() {
@@ -629,7 +636,7 @@
       const formattedPrestacao = formatEUR(simulacao.prestacao);
       prestacaoLabel.textContent = formattedPrestacao;
       if (prestacaoResumo) prestacaoResumo.textContent = formattedPrestacao;
-      if (tanResumo) tanResumo.textContent = formatPercent(simulacao.tan);
+      if (tanResumo) tanResumo.textContent = formatPercent(simulacao.tan, 2);
       if (taegResumo) taegResumo.textContent = Number.isFinite(simulacao.taeg) ? formatPercent(simulacao.taeg) : '—';
       if (mticResumo) mticResumo.textContent = formatEUR(simulacao.mtic);
     }
@@ -644,7 +651,7 @@
       const prestacaoAtual = calcPrestacao();
       const alvo = Math.max(0, prestacaoAtual + delta);
       const meses = Number(prazo.value);
-      const tan = getTAN(meses);
+      const tan = getTanConfig(meses).calcTan;
       const i = tan / 12;
       const fator = i === 0 ? meses : (Math.pow(1 + i, meses) - 1) / (i * Math.pow(1 + i, meses));
       const prestacaoPorEuro = (1 / fator) + (((1 / fator) * meses - 1) * TAXA_SELO_JUROS / meses);
