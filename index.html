@@ -279,6 +279,37 @@
       color: rgba(255, 255, 255, .86);
     }
 
+    .summary-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .summary-metric {
+      background: rgba(255, 255, 255, .08);
+      border: 1px solid rgba(255, 255, 255, .18);
+      border-radius: 10px;
+      padding: 10px;
+      min-width: 0;
+    }
+
+    .summary-metric span {
+      display: block;
+      color: rgba(255, 255, 255, .72);
+      font-size: .72rem;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 4px;
+    }
+
+    .summary-metric strong {
+      display: block;
+      color: #fff;
+      font-size: .95rem;
+      line-height: 1.2;
+    }
+
     .note-card {
       margin-top: 16px;
       background: #f8fbff;
@@ -345,6 +376,7 @@
       .inputs { grid-template-columns: 1fr; }
       .control { flex-wrap: wrap; }
       .slider-wrap .value { width: 100%; }
+      .summary-metrics { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -374,7 +406,7 @@
         <div class="section green">
           <div class="section-head">
             <h2>O montante que preciso</h2>
-            <div class="sub">De 0€ até 75.000€</div>
+            <div class="sub">De 1.000€ até 75.000€</div>
           </div>
           <div class="control">
             <button type="button" onclick="stepMontante(-500)">−</button>
@@ -398,13 +430,13 @@
         <div class="section green">
           <div class="section-head">
             <h2>Em quantos meses</h2>
-            <div class="sub" id="prazoSub">De 60 a 120 meses</div>
+            <div class="sub" id="prazoSub">De 24 a 120 meses</div>
           </div>
           <div class="control slider-wrap">
             <button type="button" onclick="stepPrazo(-12)">−</button>
-            <input type="range" id="prazo" min="60" max="120" step="12" value="60" />
+            <input type="range" id="prazo" min="24" max="120" step="12" value="120" />
             <button type="button" onclick="stepPrazo(12)">+</button>
-            <div class="value" id="prazoLabel">60 MESES<small>5 anos</small></div>
+            <div class="value" id="prazoLabel">120 MESES<small>10 anos</small></div>
           </div>
         </div>
 
@@ -416,6 +448,20 @@
           <div class="summary-value">
             <span class="summary-label">Prestação estimada</span>
             <span class="summary-amount" id="prestacaoResumo">—</span>
+          </div>
+          <div class="summary-metrics">
+            <div class="summary-metric">
+              <span>TAN</span>
+              <strong id="tanResumo">—</strong>
+            </div>
+            <div class="summary-metric">
+              <span>TAEG</span>
+              <strong id="taegResumo">—</strong>
+            </div>
+            <div class="summary-metric">
+              <span>MTIC</span>
+              <strong id="mticResumo">—</strong>
+            </div>
           </div>
           <p class="summary-hint">Valor indicativo para as condições selecionadas, com atualização automática conforme altera montante e prazo.</p>
           <button class="cta-btn" type="button">Simulação atualizada</button>
@@ -440,11 +486,18 @@
   </div>
 
   <script>
-    const PRAZO_MIN = 60;
+    const PRAZO_MIN = 24;
+    const MONTANTE_MIN = 1000;
+    const MONTANTE_MAX = 75000;
+    const TAXA_SELO_CAPITAL = 0.0176;
+    const TAXA_SELO_JUROS = 0.04;
 
     const montanteLabel = document.getElementById('montanteLabel');
     const prestacaoLabel = document.getElementById('prestacaoLabel');
     const prestacaoResumo = document.getElementById('prestacaoResumo');
+    const tanResumo = document.getElementById('tanResumo');
+    const taegResumo = document.getElementById('taegResumo');
+    const mticResumo = document.getElementById('mticResumo');
     const prazo = document.getElementById('prazo');
     const prazoLabel = document.getElementById('prazoLabel');
     const prazoSub = document.getElementById('prazoSub');
@@ -452,6 +505,7 @@
     const entrada = document.getElementById('entrada');
 
     const formatEUR = value => value.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' });
+    const formatPercent = value => `${(value * 100).toFixed(1).replace('.', ',')}%`;
 
     function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
@@ -459,27 +513,83 @@
 
     function getMontante() {
       const total = Number(pvp.value || 0) - Number(entrada.value || 0);
-      return clamp(total, 0, 75000);
+      return clamp(total, 0, MONTANTE_MAX);
     }
 
-    const JUROS_INCREMENTO = 0.02;
-
-    // TAN por prazo com acréscimo total de +2 p.p.
+    // Curva calibrada para crédito automóvel usado Cetelem.
     function getTAN(meses) {
-      if (meses <= 24) return 0.1050 + JUROS_INCREMENTO;
-      if (meses <= 48) return 0.1206 + JUROS_INCREMENTO;
-      if (meses <= 71) return 0.1281 + JUROS_INCREMENTO;
-      if (meses <= 80) return 0.1306 + JUROS_INCREMENTO;
-      if (meses <= 84) return 0.1315 + JUROS_INCREMENTO;
-      if (meses <= 96) return 0.1130 + JUROS_INCREMENTO;
-      return 0.1135 + JUROS_INCREMENTO;
+      if (meses <= 24) return 0.0960;
+      if (meses <= 36) return 0.0975;
+      if (meses <= 48) return 0.0985;
+      if (meses <= 60) return 0.0990;
+      if (meses <= 84) return 0.1000;
+      if (meses <= 96) return 0.1008;
+      return 0.10143871603047017;
     }
 
     // Prazo máximo depende do montante (observado no simulador)
     function getPrazoMax(montante) {
-      if (montante <= 5000) return 84;
-      if (montante <= 9500) return 96;
+      if (montante > 0 && montante < MONTANTE_MIN) return PRAZO_MIN;
       return 120;
+    }
+
+    function pmt(tan, meses, montante) {
+      const i = tan / 12;
+      if (i === 0) return montante / meses;
+
+      const numerador = i * Math.pow(1 + i, meses);
+      const denominador = Math.pow(1 + i, meses) - 1;
+      return montante * (numerador / denominador);
+    }
+
+    function getJurosTotais(montante, meses, prestacaoBase) {
+      return (prestacaoBase * meses) - montante;
+    }
+
+    function irr(cashflows, guess = 0.01) {
+      let rate = guess;
+
+      for (let attempt = 0; attempt < 80; attempt += 1) {
+        let npv = 0;
+        let derivative = 0;
+
+        cashflows.forEach((cashflow, period) => {
+          const factor = Math.pow(1 + rate, period);
+          npv += cashflow / factor;
+          derivative += (-period * cashflow) / Math.pow(1 + rate, period + 1);
+        });
+
+        if (Math.abs(derivative) < 1e-12) break;
+
+        const nextRate = rate - (npv / derivative);
+        if (!Number.isFinite(nextRate)) break;
+        if (Math.abs(nextRate - rate) < 1e-10) return nextRate;
+        rate = nextRate;
+      }
+
+      return NaN;
+    }
+
+    function calcSimulacao() {
+      const montante = getMontante();
+      const meses = Number(prazo.value);
+
+      if (montante <= 0) {
+        return { montante, meses, prestacao: 0, tan: getTAN(meses), taeg: NaN, mtic: 0 };
+      }
+
+      const tan = getTAN(meses);
+      const prestacaoBase = pmt(tan, meses, montante);
+      const jurosTotais = getJurosTotais(montante, meses, prestacaoBase);
+      const seloJurosMensal = (jurosTotais * TAXA_SELO_JUROS) / meses;
+      const prestacao = prestacaoBase + seloJurosMensal;
+      const seloCapital = montante * TAXA_SELO_CAPITAL;
+      const mtic = (prestacao * meses) + seloCapital;
+      const cashflows = [montante - seloCapital, ...Array(meses).fill(-prestacao)];
+      const irrMensal = irr(cashflows);
+      const taeg = Number.isFinite(irrMensal) ? Math.pow(1 + irrMensal, 12) - 1 : NaN;
+
+      return { montante, meses, prestacao, tan, taeg, mtic };
     }
 
     function syncPrazoRange() {
@@ -511,26 +621,21 @@
     }
 
     function calcPrestacao() {
-      const montante = getMontante();
-      const meses = Number(prazo.value);
-      const i = getTAN(meses) / 12;
-
-      if (i === 0) return montante / meses;
-
-      const numerador = i * Math.pow(1 + i, meses);
-      const denominador = Math.pow(1 + i, meses) - 1;
-      return montante * (numerador / denominador);
+      return calcSimulacao().prestacao;
     }
 
     function updatePrestacao() {
-      const prestacao = calcPrestacao();
-      const formattedPrestacao = formatEUR(prestacao);
+      const simulacao = calcSimulacao();
+      const formattedPrestacao = formatEUR(simulacao.prestacao);
       prestacaoLabel.textContent = formattedPrestacao;
       if (prestacaoResumo) prestacaoResumo.textContent = formattedPrestacao;
+      if (tanResumo) tanResumo.textContent = formatPercent(simulacao.tan);
+      if (taegResumo) taegResumo.textContent = Number.isFinite(simulacao.taeg) ? formatPercent(simulacao.taeg) : '—';
+      if (mticResumo) mticResumo.textContent = formatEUR(simulacao.mtic);
     }
 
     function stepMontante(delta) {
-      const novo = clamp(getMontante() + delta, 0, 75000);
+      const novo = clamp(getMontante() + delta, 0, MONTANTE_MAX);
       pvp.value = novo + Number(entrada.value || 0);
       updateMontante();
     }
@@ -539,17 +644,13 @@
       const prestacaoAtual = calcPrestacao();
       const alvo = Math.max(0, prestacaoAtual + delta);
       const meses = Number(prazo.value);
-      const i = getTAN(meses) / 12;
+      const tan = getTAN(meses);
+      const i = tan / 12;
+      const fator = i === 0 ? meses : (Math.pow(1 + i, meses) - 1) / (i * Math.pow(1 + i, meses));
+      const prestacaoPorEuro = (1 / fator) + (((1 / fator) * meses - 1) * TAXA_SELO_JUROS / meses);
+      const montante = alvo / prestacaoPorEuro;
 
-      let montante = 0;
-      if (i === 0) {
-        montante = alvo * meses;
-      } else {
-        const fator = (Math.pow(1 + i, meses) - 1) / (i * Math.pow(1 + i, meses));
-        montante = alvo * fator;
-      }
-
-      pvp.value = clamp(montante + Number(entrada.value || 0), 0, 75000);
+      pvp.value = clamp(montante + Number(entrada.value || 0), 0, MONTANTE_MAX);
       updateMontante();
     }
 
