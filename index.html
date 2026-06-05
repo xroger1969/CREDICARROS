@@ -433,9 +433,9 @@
             <div class="sub" id="prazoSub">De 12 a 120 meses</div>
           </div>
           <div class="control slider-wrap">
-            <button type="button" onclick="stepPrazo(-12)">−</button>
-            <input type="range" id="prazo" min="12" max="120" step="12" value="120" />
-            <button type="button" onclick="stepPrazo(12)">+</button>
+            <button type="button" onclick="stepPrazo(-1)">−</button>
+            <input type="range" id="prazo" min="12" max="120" step="1" value="120" />
+            <button type="button" onclick="stepPrazo(1)">+</button>
             <div class="value" id="prazoLabel">120 MESES<small>10 anos</small></div>
           </div>
         </div>
@@ -518,13 +518,14 @@
 
     const TAN_CURVE = [
       { months: 12, displayTan: 0.0960, calcTan: 0.0960 },
-      { months: 24, displayTan: 0.0960, calcTan: 0.0960 },
+      { months: 13, displayTan: 0.0960, calcTan: 0.0959964036 },
+      { months: 24, displayTan: 0.0960, calcTan: 0.0959964036 },
       { months: 36, displayTan: 0.0975, calcTan: 0.0975 },
       { months: 48, displayTan: 0.0985, calcTan: 0.0985 },
       { months: 60, displayTan: 0.0990, calcTan: 0.0990 },
       { months: 72, displayTan: 0.1025, calcTan: 0.10282873886881501 },
       { months: 84, displayTan: 0.1025, calcTan: 0.10282873886881501 },
-      { months: 96, displayTan: 0.1010, calcTan: 0.10144283700127782 },
+      { months: 96, displayTan: 0.1010, calcTan: 0.1013708048 },
       { months: 108, displayTan: 0.1010, calcTan: 0.10144283700127782 },
       { months: 120, displayTan: 0.1010, calcTan: 0.10144283700127782 },
     ];
@@ -537,6 +538,8 @@
     // Prazo máximo depende do montante (observado no simulador)
     function getPrazoMax(montante) {
       if (montante > 0 && montante < MONTANTE_MIN) return PRAZO_MIN;
+      if (montante <= 5000) return 84;
+      if (montante <= 9500) return 96;
       return 120;
     }
 
@@ -590,13 +593,14 @@
       const jurosTotais = getJurosTotais(montante, meses, prestacaoBase);
       const seloJurosMensal = (jurosTotais * TAXA_SELO_JUROS) / meses;
       const prestacao = prestacaoBase + seloJurosMensal;
+      const prestacaoArredondada = Math.round(prestacao * 100) / 100;
       const seloCapital = montante * TAXA_SELO_CAPITAL;
-      const mtic = (prestacao * meses) + seloCapital;
-      const cashflows = [montante - seloCapital, ...Array(meses).fill(-prestacao)];
+      const mtic = (prestacaoArredondada * meses) + seloCapital;
+      const cashflows = [montante - seloCapital, ...Array(meses).fill(-prestacaoArredondada)];
       const irrMensal = irr(cashflows);
       const taeg = Number.isFinite(irrMensal) ? Math.pow(1 + irrMensal, 12) - 1 : NaN;
 
-      return { montante, meses, prestacao, tan: tanConfig.displayTan, taeg, mtic };
+      return { montante, meses, prestacao: prestacaoArredondada, tan: tanConfig.displayTan, taeg, mtic };
     }
 
     function syncPrazoRange() {
@@ -622,8 +626,14 @@
 
     function updatePrazo() {
       const meses = Number(prazo.value);
-      const anos = Math.round(meses / 12);
-      prazoLabel.innerHTML = `${meses} MESES<small>${anos} anos</small>`;
+      const anos = Math.floor(meses / 12);
+      const mesesRestantes = meses % 12;
+      const partes = [];
+
+      if (anos > 0) partes.push(`${anos} ${anos === 1 ? 'ano' : 'anos'}`);
+      if (mesesRestantes > 0) partes.push(`${mesesRestantes} ${mesesRestantes === 1 ? 'mês' : 'meses'}`);
+
+      prazoLabel.innerHTML = `${meses} MESES<small>${partes.join(' e ')}</small>`;
       updatePrestacao();
     }
 
