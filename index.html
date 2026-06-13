@@ -144,10 +144,7 @@
       transition: transform .15s ease, box-shadow .15s ease;
     }
 
-    .section.green .control button {
-      background: rgba(255, 255, 255, 0.95);
-    }
-
+    .section.green .control button { background: rgba(255, 255, 255, 0.95); }
     .control button:hover { transform: translateY(-1px); }
 
     .value {
@@ -175,10 +172,7 @@
       margin-top: 2px;
     }
 
-    .section.green .value {
-      background: rgba(255, 255, 255, 0.96);
-    }
-
+    .section.green .value { background: rgba(255, 255, 255, 0.96); }
     .slider-wrap { align-items: center; }
 
     input[type="range"] {
@@ -190,9 +184,7 @@
     .form-card,
     .summary-card,
     .docs-info,
-    .note-card {
-      padding: 20px;
-    }
+    .note-card { padding: 20px; }
 
     .card-title {
       margin: 0 0 14px;
@@ -208,10 +200,7 @@
       gap: 12px;
     }
 
-    .field {
-      display: grid;
-      gap: 6px;
-    }
+    .field { display: grid; gap: 6px; }
 
     label {
       font-size: .9rem;
@@ -360,6 +349,8 @@
       cursor: pointer;
     }
 
+    .cta-btn:disabled { opacity: .75; cursor: wait; }
+
     @media (max-width: 920px) {
       .simulator-layout { grid-template-columns: 1fr; }
       .summary-card { order: -1; }
@@ -439,7 +430,6 @@
             <div class="value" id="prazoLabel">120 MESES<small>10 anos</small></div>
           </div>
         </div>
-
       </section>
 
       <aside>
@@ -491,7 +481,7 @@
     const MONTANTE_MAX = 75000;
     const TAXA_SELO_CAPITAL = 0.0176;
     const TAXA_SELO_JUROS = 0.04;
-    const MAKE_WEBHOOK_URL = '';
+    const MAKE_WEBHOOK_URL = 'https://hook.eu2.make.com/h9v6hcszc1qu2cfq5uskxqnn4ebfqyhf';
     const WHATSAPP_PHONE = '351918404101';
 
     const montanteLabel = document.getElementById('montanteLabel');
