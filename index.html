@@ -209,6 +209,8 @@
     }
 
     input[type="number"],
+    input[type="text"],
+    input[type="tel"],
     select {
       width: 100%;
       padding: 13px 14px;
@@ -223,6 +225,8 @@
     }
 
     input[type="number"]:focus,
+    input[type="text"]:focus,
+    input[type="tel"]:focus,
     select:focus {
       border-color: var(--accent);
       box-shadow: 0 0 0 3px rgba(31, 111, 205, .15);
@@ -299,6 +303,51 @@
       line-height: 1.2;
     }
 
+    .lead-form {
+      margin-top: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .summary-card .field label { color: rgba(255, 255, 255, .9); }
+
+    .summary-card input[type="text"],
+    .summary-card input[type="tel"] {
+      border-color: rgba(255, 255, 255, .32);
+      background: rgba(255, 255, 255, .96);
+      color: var(--primary-strong);
+    }
+
+    .consent {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px;
+      align-items: start;
+      font-size: .78rem;
+      line-height: 1.35;
+      color: rgba(255, 255, 255, .84);
+      margin-top: 2px;
+    }
+
+    .consent input { margin-top: 2px; }
+
+    .cta-btn {
+      margin-top: 14px;
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #3aa775, #149160);
+      color: #fff;
+      min-height: 48px;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: .4px;
+      box-shadow: 0 10px 20px rgba(9, 87, 60, 0.25);
+      cursor: pointer;
+    }
+
+    .cta-btn:disabled { opacity: .75; cursor: wait; }
+
     .note-card {
       margin-top: 16px;
       background: #f8fbff;
@@ -333,23 +382,6 @@
     }
 
     .docs-info li { line-height: 1.35; }
-
-    .cta-btn {
-      margin-top: 14px;
-      width: 100%;
-      border: none;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #3aa775, #149160);
-      color: #fff;
-      min-height: 48px;
-      font-size: 1rem;
-      font-weight: 700;
-      letter-spacing: .4px;
-      box-shadow: 0 10px 20px rgba(9, 87, 60, 0.25);
-      cursor: pointer;
-    }
-
-    .cta-btn:disabled { opacity: .75; cursor: wait; }
 
     @media (max-width: 920px) {
       .simulator-layout { grid-template-columns: 1fr; }
@@ -454,7 +486,23 @@
             </div>
           </div>
           <p class="summary-hint">Valor indicativo para as condições selecionadas, com atualização automática conforme altera montante e prazo.</p>
-          <button class="cta-btn" id="leadBtn" type="button">Pedir contacto com esta simulação</button>
+
+          <div class="lead-form" aria-label="Dados para contacto por WhatsApp">
+            <div class="field">
+              <label for="clienteNome">Nome</label>
+              <input type="text" id="clienteNome" autocomplete="name" placeholder="O seu nome" />
+            </div>
+            <div class="field">
+              <label for="clienteTelefone">Telemóvel</label>
+              <input type="tel" id="clienteTelefone" autocomplete="tel" inputmode="tel" placeholder="Ex.: 918 404 101" />
+            </div>
+            <label class="consent" for="consentimentoWhatsApp">
+              <input type="checkbox" id="consentimentoWhatsApp" />
+              <span>Autorizo o contacto por WhatsApp ou telefone sobre esta simulação de crédito automóvel.</span>
+            </label>
+          </div>
+
+          <button class="cta-btn" id="leadBtn" type="button">Pedir contacto por WhatsApp</button>
         </section>
 
         <section class="card docs-info">
@@ -496,12 +544,23 @@
     const pvp = document.getElementById('pvp');
     const entrada = document.getElementById('entrada');
     const leadBtn = document.getElementById('leadBtn');
+    const clienteNome = document.getElementById('clienteNome');
+    const clienteTelefone = document.getElementById('clienteTelefone');
+    const consentimentoWhatsApp = document.getElementById('consentimentoWhatsApp');
 
     const formatEUR = value => value.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' });
     const formatPercent = (value, digits = 1) => `${(value * 100).toFixed(digits).replace('.', ',')}%`;
 
     function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
+    }
+
+    function normalizePhone(value) {
+      const digits = String(value || '').replace(/\D/g, '');
+      if (digits.length === 9) return `351${digits}`;
+      if (digits.startsWith('00351')) return digits.slice(2);
+      if (digits.startsWith('351')) return digits;
+      return digits;
     }
 
     function getMontante() {
@@ -647,6 +706,8 @@
     function getLeadPayload() {
       const simulacao = calcSimulacao();
       const params = new URLSearchParams(window.location.search);
+      const telefoneOriginal = clienteTelefone ? clienteTelefone.value.trim() : '';
+      const telefoneNormalizado = normalizePhone(telefoneOriginal);
 
       return {
         origem: 'CREDICARROS',
@@ -656,6 +717,12 @@
         utm_content: params.get('utm_content') || '',
         fbclid: params.get('fbclid') || '',
         brid: params.get('brid') || '',
+        cliente_nome: clienteNome ? clienteNome.value.trim() : '',
+        cliente_telemovel: telefoneOriginal,
+        cliente_telemovel_normalizado: telefoneNormalizado,
+        consentimento_whatsapp: Boolean(consentimentoWhatsApp && consentimentoWhatsApp.checked),
+        canal_preferido: 'WhatsApp',
+        whatsapp_api_pronto: true,
         pvp: Number(pvp.value || 0),
         entrada: Number(entrada.value || 0),
         montante: simulacao.montante,
@@ -668,9 +735,34 @@
       };
     }
 
+    function validateLead(payload) {
+      if (!payload.cliente_nome) {
+        alert('Por favor, indique o seu nome para podermos fazer o contacto.');
+        if (clienteNome) clienteNome.focus();
+        return false;
+      }
+
+      if (!payload.cliente_telemovel_normalizado || payload.cliente_telemovel_normalizado.length < 9) {
+        alert('Por favor, indique um número de telemóvel válido.');
+        if (clienteTelefone) clienteTelefone.focus();
+        return false;
+      }
+
+      if (!payload.consentimento_whatsapp) {
+        alert('Para avançar, confirme que autoriza o contacto por WhatsApp ou telefone.');
+        if (consentimentoWhatsApp) consentimentoWhatsApp.focus();
+        return false;
+      }
+
+      return true;
+    }
+
     function openWhatsApp(payload) {
       const mensagem = [
         'Olá Carlos, gostava de receber mais informações sobre esta simulação de crédito automóvel.',
+        '',
+        `Nome: ${payload.cliente_nome}`,
+        `Telemóvel: ${payload.cliente_telemovel}`,
         '',
         `PVP: ${formatEUR(payload.pvp)}`,
         `Entrada inicial: ${formatEUR(payload.entrada)}`,
@@ -709,10 +801,11 @@
 
     async function handleLeadRequest() {
       const payload = getLeadPayload();
-      const textoOriginal = leadBtn.textContent;
+      if (!validateLead(payload)) return;
 
+      const textoOriginal = leadBtn.textContent;
       leadBtn.disabled = true;
-      leadBtn.textContent = 'A preparar contacto...';
+      leadBtn.textContent = 'A enviar pedido...';
 
       await sendLeadToMake(payload);
       openWhatsApp(payload);
