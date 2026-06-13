@@ -357,7 +357,7 @@
       font-weight: 700;
       letter-spacing: .4px;
       box-shadow: 0 10px 20px rgba(9, 87, 60, 0.25);
-      cursor: default;
+      cursor: pointer;
     }
 
     @media (max-width: 920px) {
@@ -464,7 +464,7 @@
             </div>
           </div>
           <p class="summary-hint">Valor indicativo para as condições selecionadas, com atualização automática conforme altera montante e prazo.</p>
-          <button class="cta-btn" type="button">Simulação atualizada</button>
+          <button class="cta-btn" id="leadBtn" type="button">Pedir contacto com esta simulação</button>
         </section>
 
         <section class="card docs-info">
@@ -491,6 +491,8 @@
     const MONTANTE_MAX = 75000;
     const TAXA_SELO_CAPITAL = 0.0176;
     const TAXA_SELO_JUROS = 0.04;
+    const MAKE_WEBHOOK_URL = '';
+    const WHATSAPP_PHONE = '351918404101';
 
     const montanteLabel = document.getElementById('montanteLabel');
     const prestacaoLabel = document.getElementById('prestacaoLabel');
@@ -503,6 +505,7 @@
     const prazoSub = document.getElementById('prazoSub');
     const pvp = document.getElementById('pvp');
     const entrada = document.getElementById('entrada');
+    const leadBtn = document.getElementById('leadBtn');
 
     const formatEUR = value => value.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' });
     const formatPercent = (value, digits = 1) => `${(value * 100).toFixed(digits).replace('.', ',')}%`;
@@ -651,6 +654,83 @@
       if (mticResumo) mticResumo.textContent = formatEUR(simulacao.mtic);
     }
 
+    function getLeadPayload() {
+      const simulacao = calcSimulacao();
+      const params = new URLSearchParams(window.location.search);
+
+      return {
+        origem: 'CREDICARROS',
+        pagina: window.location.href,
+        utm_source: params.get('utm_source') || '',
+        utm_medium: params.get('utm_medium') || '',
+        utm_content: params.get('utm_content') || '',
+        fbclid: params.get('fbclid') || '',
+        brid: params.get('brid') || '',
+        pvp: Number(pvp.value || 0),
+        entrada: Number(entrada.value || 0),
+        montante: simulacao.montante,
+        prazo_meses: simulacao.meses,
+        prestacao_estimada: simulacao.prestacao,
+        tan_percentagem: Number((simulacao.tan * 100).toFixed(2)),
+        taeg_percentagem: Number.isFinite(simulacao.taeg) ? Number((simulacao.taeg * 100).toFixed(2)) : null,
+        mtic: Number(simulacao.mtic.toFixed(2)),
+        criado_em: new Date().toISOString()
+      };
+    }
+
+    function openWhatsApp(payload) {
+      const mensagem = [
+        'Olá Carlos, gostava de receber mais informações sobre esta simulação de crédito automóvel.',
+        '',
+        `PVP: ${formatEUR(payload.pvp)}`,
+        `Entrada inicial: ${formatEUR(payload.entrada)}`,
+        `Montante a financiar: ${formatEUR(payload.montante)}`,
+        `Prazo: ${payload.prazo_meses} meses`,
+        `Prestação estimada: ${formatEUR(payload.prestacao_estimada)}`,
+        `TAN: ${payload.tan_percentagem.toFixed(2).replace('.', ',')}%`,
+        `TAEG: ${payload.taeg_percentagem !== null ? payload.taeg_percentagem.toFixed(2).replace('.', ',') + '%' : '—'}`,
+        `MTIC: ${formatEUR(payload.mtic)}`,
+        '',
+        'Obrigado.'
+      ].join('\n');
+
+      window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(mensagem)}`, '_blank');
+    }
+
+    async function sendLeadToMake(payload) {
+      if (!MAKE_WEBHOOK_URL) return false;
+
+      try {
+        await fetch(MAKE_WEBHOOK_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          keepalive: true,
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8'
+          },
+          body: JSON.stringify(payload)
+        });
+        return true;
+      } catch (error) {
+        console.warn('Não foi possível enviar a simulação para o Make.', error);
+        return false;
+      }
+    }
+
+    async function handleLeadRequest() {
+      const payload = getLeadPayload();
+      const textoOriginal = leadBtn.textContent;
+
+      leadBtn.disabled = true;
+      leadBtn.textContent = 'A preparar contacto...';
+
+      await sendLeadToMake(payload);
+      openWhatsApp(payload);
+
+      leadBtn.disabled = false;
+      leadBtn.textContent = textoOriginal;
+    }
+
     function stepMontante(delta) {
       const novo = clamp(getMontante() + delta, 0, MONTANTE_MAX);
       pvp.value = novo + Number(entrada.value || 0);
@@ -681,6 +761,7 @@
     pvp.addEventListener('input', updateMontante);
     entrada.addEventListener('input', updateMontante);
     prazo.addEventListener('input', updatePrazo);
+    if (leadBtn) leadBtn.addEventListener('click', handleLeadRequest);
 
     updateMontante();
     updatePrazo();
