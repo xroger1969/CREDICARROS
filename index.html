@@ -587,11 +587,7 @@
       return TAN_CURVE.find(item => meses <= item.months) || TAN_CURVE[TAN_CURVE.length - 1];
     }
 
-    // Prazo máximo depende do montante (observado no simulador)
     function getPrazoMax(montante) {
-      if (montante > 0 && montante < MONTANTE_MIN) return PRAZO_MIN;
-      if (montante <= 5000) return 84;
-      if (montante <= 9500) return 96;
       return 120;
     }
 
@@ -660,7 +656,7 @@
       const maxMeses = getPrazoMax(montante);
 
       prazo.max = maxMeses;
-      if (prazoSub) prazoSub.textContent = `De ${PRAZO_MIN} a ${maxMeses} meses`;
+      if (prazoSub) prazoSub.textContent = `De ${PRAZO_MIN} a 120 meses`;
 
       if (Number(prazo.value) > maxMeses) {
         prazo.value = maxMeses;
