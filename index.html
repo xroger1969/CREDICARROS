@@ -771,7 +771,6 @@
         `Prestação estimada: ${formatEUR(payload.prestacao_estimada)}`,
         `TAN: ${payload.tan_percentagem.toFixed(2).replace('.', ',')}%`,
         `TAEG: ${payload.taeg_percentagem !== null ? payload.taeg_percentagem.toFixed(2).replace('.', ',') + '%' : '—'}`,
-        `MTIC: ${formatEUR(payload.mtic)}`,
         '',
         'Obrigado.'
       ].join('\n');
