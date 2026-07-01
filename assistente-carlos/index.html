@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Assistente Comercial | Carlos Vasconcelos</title>
+  <meta name="description" content="Assistente comercial para pedidos de informação sobre viaturas, financiamento e retoma.">
+  <style>
+    :root{--azul:#0b5cff;--azul2:#06327e;--bg:#f3f6fb;--txt:#172033;--muted:#68758a;--line:#dbe3ef;--ok:#0f8f58;--card:#fff}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at top left,#dfeaff,transparent 34%),var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:var(--txt);display:flex;align-items:center;justify-content:center;padding:18px}.app{width:100%;max-width:760px;background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:0 20px 55px rgba(20,36,70,.15);overflow:hidden}header{background:linear-gradient(135deg,var(--azul),var(--azul2));color:#fff;padding:28px 24px}.kicker{text-transform:uppercase;letter-spacing:.09em;font-size:12px;opacity:.82;margin-bottom:8px}h1{margin:0 0 8px;font-size:clamp(26px,4vw,38px);line-height:1.05}header p{margin:0;line-height:1.5;opacity:.93;max-width:620px}main{padding:22px}.bar{height:10px;background:#e7edf7;border-radius:99px;overflow:hidden;margin-bottom:18px}.bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--azul),#21a1ff);transition:.25s}.chat{display:flex;flex-direction:column;gap:12px;min-height:250px}.msg{max-width:86%;padding:13px 15px;border-radius:18px;line-height:1.45;font-size:15px}.bot{align-self:flex-start;background:#eef4ff;border:1px solid #d9e7ff}.me{align-self:flex-end;background:var(--azul);color:#fff}.panel{margin-top:16px;border-top:1px solid var(--line);padding-top:16px}.field{display:flex;gap:10px;align-items:center}.field input,.field textarea,.field select{width:100%;border:1px solid var(--line);border-radius:14px;padding:14px;font-size:16px;font-family:inherit;background:#fff;color:var(--txt)}.field textarea{min-height:92px;resize:vertical}.btn{border:0;border-radius:14px;padding:14px 16px;font-size:15px;font-weight:800;cursor:pointer;background:var(--azul);color:#fff;white-space:nowrap}.btn:hover{filter:brightness(.95)}.btn2{background:#eef2f8;color:#172033}.choices{display:flex;flex-wrap:wrap;gap:9px}.choice{border:1px solid var(--line);background:#fff;border-radius:99px;padding:11px 14px;cursor:pointer;font-weight:700}.choice:hover{border-color:var(--azul);color:var(--azul)}.summary{background:#f8fafc;border:1px solid var(--line);border-radius:18px;padding:15px;margin-top:14px;line-height:1.55;white-space:pre-wrap}.actions{display:grid;gap:10px;margin-top:14px}.actions a,.actions button{display:block;text-align:center;text-decoration:none;border-radius:14px;padding:14px 16px;font-weight:900;border:0;cursor:pointer}.wa{background:#18a957;color:#fff}.stock{background:#172033;color:#fff}.sim{background:#eef2f8;color:#172033}.small{font-size:13px;color:var(--muted);margin-top:12px;line-height:1.4}.foot{padding:0 22px 22px;color:var(--muted);font-size:13px;text-align:center}@media(max-width:560px){body{padding:10px}.app{border-radius:18px}header{padding:24px 18px}main{padding:16px}.field{flex-direction:column;align-items:stretch}.btn{width:100%}.msg{max-width:94%}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="kicker">Assistente Comercial</div>
+      <h1>Olá, sou o assistente do Carlos Vasconcelos.</h1>
+      <p>Responda a algumas perguntas rápidas sobre a viatura, financiamento e retoma. No final, pode enviar tudo diretamente por WhatsApp.</p>
+    </header>
+    <main>
+      <div class="bar"><span id="progress"></span></div>
+      <div class="chat" id="chat"></div>
+      <div class="panel" id="panel"></div>
+    </main>
+    <div class="foot">Carlos Vasconcelos · Atendimento comercial automóvel</div>
+  </div>
+<script>
+const WHATSAPP="351918404101";
+const STOCK="https://spremium.standvirtual.com/inventory";
+const SIMULADOR="https://xroger1969.github.io/CREDICARROS/";
+const qs=new URLSearchParams(location.search);
+const data={
+  origem:qs.get("origem")||"Standvirtual",
+  viatura:qs.get("viatura")||qs.get("anuncio")||"",
+  nome:"", telefone:"", financiamento:"", orcamento:"", retoma:"", visita:"", observacoes:""
+};
+const steps=[
+  {key:"viatura",q:"Qual é a viatura que pretende informação?",ph:"Ex.: Renault Zoe Limited 50 / Tesla Model 3",type:"text",skipIfFilled:true},
+  {key:"nome",q:"Qual é o seu nome?",ph:"Escreva o seu nome",type:"text"},
+  {key:"telefone",q:"Qual é o seu telefone ou WhatsApp?",ph:"Ex.: 9xx xxx xxx",type:"tel"},
+  {key:"financiamento",q:"Pretende comprar a pronto ou fazer financiamento?",choices:["Pronto pagamento","Financiamento","Ainda estou a avaliar"]},
+  {key:"orcamento",q:"Qual é o orçamento ou prestação mensal que pretende?",ph:"Ex.: até 20.000€ ou até 300€/mês",type:"text"},
+  {key:"retoma",q:"Tem alguma viatura para retoma?",choices:["Sim, tenho retoma","Não tenho retoma","Talvez"]},
+  {key:"visita",q:"Quando prefere ser contactado ou marcar visita?",ph:"Ex.: hoje à tarde, amanhã de manhã, sábado",type:"text"},
+  {key:"observacoes",q:"Quer acrescentar alguma observação?",ph:"Ex.: tenho urgência, quero saber garantia, despesas, autonomia, carregamento...",type:"textarea",optional:true}
+];
+let i=0;
+const chat=document.getElementById("chat"),panel=document.getElementById("panel"),progress=document.getElementById("progress");
+function esc(s){return String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]))}
+function bubble(txt,cls="bot"){const d=document.createElement("div");d.className="msg "+cls;d.innerHTML=txt;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;}
+function pct(){progress.style.width=Math.min(100,Math.round((i/steps.length)*100))+"%";}
+function show(){pct();panel.innerHTML="";while(steps[i]&&steps[i].skipIfFilled&&data[steps[i].key])i++;if(i>=steps.length)return done();const s=steps[i];bubble(esc(s.q));if(s.choices){const wrap=document.createElement("div");wrap.className="choices";s.choices.forEach(c=>{const b=document.createElement("button");b.className="choice";b.textContent=c;b.onclick=()=>save(c);wrap.appendChild(b)});panel.appendChild(wrap)}else{const form=document.createElement("form");form.className="field";const input=s.type==="textarea"?document.createElement("textarea"):document.createElement("input");if(s.type!=="textarea")input.type=s.type||"text";input.placeholder=s.ph||"Escreva aqui";input.value=data[s.key]||"";input.autofocus=true;const btn=document.createElement("button");btn.className="btn";btn.textContent=s.optional?"Continuar":"Enviar";form.append(input,btn);form.onsubmit=e=>{e.preventDefault();const v=input.value.trim();if(!v&&!s.optional){input.focus();return}save(v||"Sem observações")};panel.appendChild(form);setTimeout(()=>input.focus(),80)}}
+function save(v){const s=steps[i];data[s.key]=v;bubble(esc(v),"me");i++;setTimeout(show,220)}
+function resumo(){return `Nova lead comercial - ${data.origem}\n\nViatura: ${data.viatura||"Não indicada"}\nNome: ${data.nome}\nTelefone/WhatsApp: ${data.telefone}\nCompra: ${data.financiamento}\nOrçamento/prestação: ${data.orcamento}\nRetoma: ${data.retoma}\nContacto/visita: ${data.visita}\nObservações: ${data.observacoes||"Sem observações"}`}
+function done(){pct();progress.style.width="100%";bubble("Obrigado. Já tenho os dados principais. Agora pode enviar o pedido diretamente para o Carlos por WhatsApp.");panel.innerHTML=`<div class="summary">${esc(resumo())}</div><div class="actions"><a class="wa" href="https://wa.me/${WHATSAPP}?text=${encodeURIComponent(resumo())}" target="_blank" rel="noopener">Enviar para Carlos no WhatsApp</a><a class="stock" href="${STOCK}" target="_blank" rel="noopener">Consultar stock disponível</a><a class="sim" href="${SIMULADOR}" target="_blank" rel="noopener">Abrir simulador de crédito</a><button class="btn2" id="again">Fazer novo pedido</button></div><p class="small">Nota: a disponibilidade, equipamento, despesas, garantia e condições finais carecem sempre de confirmação com o gestor comercial.</p>`;document.getElementById("again").onclick=()=>{Object.keys(data).forEach(k=>{if(k!=="origem")data[k]=""});i=0;chat.innerHTML="";show()}}
+if(data.viatura)bubble("Viatura identificada: "+esc(data.viatura));
+show();
+</script>
+</body>
+</html>
