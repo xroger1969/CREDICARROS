@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Assistente IA | Carlos Vasconcelos</title>
+<meta name="description" content="Assistente comercial com IA para pedidos sobre viaturas, financiamento e retoma.">
+<style>
+:root{--blue:#0b5cff;--blue2:#052b73;--bg:#f3f6fb;--txt:#172033;--muted:#68758a;--line:#dbe3ef;--card:#fff;--green:#18a957}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at top left,#dfeaff,transparent 34%),var(--bg);font-family:Arial,sans-serif;color:var(--txt);padding:14px;display:flex;align-items:center;justify-content:center}.app{width:100%;max-width:820px;background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:0 18px 50px #0002;overflow:hidden}header{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;padding:24px}.tag{text-transform:uppercase;letter-spacing:.09em;font-size:12px;opacity:.85;margin-bottom:7px}h1{margin:0 0 8px;font-size:clamp(25px,4vw,38px);line-height:1.05}header p{margin:0;line-height:1.5;opacity:.94}.chat{height:430px;overflow:auto;padding:18px;background:#fbfcff;display:flex;flex-direction:column;gap:12px}.msg{max-width:86%;padding:13px 15px;border-radius:17px;line-height:1.45;font-size:15px;white-space:pre-wrap}.bot{align-self:flex-start;background:#eef4ff;border:1px solid #d9e7ff}.me{align-self:flex-end;background:var(--blue);color:white}.panel{border-top:1px solid var(--line);padding:14px;background:white}.row{display:flex;gap:10px}.row input{flex:1;border:1px solid var(--line);border-radius:14px;padding:14px;font-size:16px}.row button{border:0;border-radius:14px;padding:14px 16px;background:var(--blue);color:white;font-weight:bold;font-size:15px;cursor:pointer}.quick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}.quick button{border:1px solid var(--line);border-radius:999px;background:white;padding:10px 12px;font-weight:bold;cursor:pointer}.quick button:hover{border-color:var(--blue);color:var(--blue)}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.actions a{display:block;text-align:center;text-decoration:none;border-radius:14px;padding:13px 14px;font-weight:bold}.wa{background:var(--green);color:#fff}.stock{background:#172033;color:#fff}.small{font-size:13px;color:var(--muted);line-height:1.4;margin-top:10px}.hidden{display:none}@media(max-width:560px){body{padding:8px}.app{border-radius:16px}.chat{height:420px}.row{flex-direction:column}.row button{width:100%}.actions{grid-template-columns:1fr}.msg{max-width:94%}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+<div class="tag">Assistente Comercial IA</div>
+<h1>Olá, sou o assistente do Carlos Vasconcelos.</h1>
+<p>Posso ajudar com informações iniciais sobre viaturas, financiamento, retoma e marcação de contacto.</p>
+</header>
+<div id="chat" class="chat"></div>
+<div class="panel">
+<div class="quick">
+<button data-txt="Quero saber se a viatura ainda está disponível.">Disponibilidade</button>
+<button data-txt="Pretendo fazer financiamento.">Financiamento</button>
+<button data-txt="Tenho uma viatura para retoma.">Retoma</button>
+<button data-txt="Quero marcar visita ou test-drive.">Marcar visita</button>
+</div>
+<form id="form" class="row">
+<input id="input" placeholder="Escreva a sua mensagem..." autocomplete="off">
+<button type="submit">Enviar</button>
+</form>
+<div class="actions">
+<a id="wa" class="wa" href="#" target="_blank" rel="noopener">Enviar resumo por WhatsApp</a>
+<a class="stock" href="https://spremium.standvirtual.com/inventory" target="_blank" rel="noopener">Ver stock</a>
+</div>
+<div class="small">Nota: disponibilidade, equipamento, despesas, garantia, condições de financiamento e preço final carecem sempre de confirmação com o gestor comercial.</div>
+</div>
+</div>
+<script>
+const chat=document.getElementById('chat');
+const form=document.getElementById('form');
+const input=document.getElementById('input');
+const wa=document.getElementById('wa');
+const params=new URLSearchParams(location.search);
+const contexto={origem:params.get('origem')||'standvirtual',viatura:params.get('viatura')||''};
+let history=[];
+function esc(s){return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+function add(text,cls){const d=document.createElement('div');d.className='msg '+cls;d.innerHTML=esc(text);chat.appendChild(d);chat.scrollTop=chat.scrollHeight;}
+function resumo(){return history.map(m=>(m.role==='assistant'?'Assistente':'Cliente')+': '+m.content).join('\n').slice(-2800)}
+function updateWa(){const txt='Lead via assistente IA\n\nOrigem: '+contexto.origem+'\nViatura: '+(contexto.viatura||'não indicada')+'\n\nResumo:\n'+resumo();wa.href='https://wa.me/351918404101?text='+encodeURIComponent(txt)}
+async function send(text){
+ if(!text.trim())return;
+ add(text,'me'); history.push({role:'user',content:text}); updateWa(); input.value=''; input.disabled=true;
+ add('A analisar...','bot'); const loading=chat.lastChild;
+ try{
+  const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,history,contexto})});
+  const data=await r.json(); loading.remove();
+  const reply=data.reply||data.error||'Não consegui responder agora. Pode contactar diretamente o Carlos pelo WhatsApp 918404101.';
+  add(reply,'bot'); history.push({role:'assistant',content:reply}); updateWa();
+ }catch(e){loading.remove();add('Não consegui ligar à IA neste momento. Pode enviar o pedido diretamente pelo WhatsApp.', 'bot')}
+ input.disabled=false; input.focus();
+}
+form.onsubmit=e=>{e.preventDefault();send(input.value)};
+document.querySelectorAll('.quick button').forEach(b=>b.onclick=()=>send(b.dataset.txt));
+const inicio=contexto.viatura?'Viatura de interesse: '+contexto.viatura+'\nComo posso ajudar?':'Indique a viatura que pretende, ou escolha uma das opções rápidas.';
+add(inicio,'bot');
+updateWa();
+</script>
+</body>
+</html>
