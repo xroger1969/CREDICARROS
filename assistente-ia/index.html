@@ -14,15 +14,15 @@
 <header>
 <div class="tag">Assistente Comercial IA</div>
 <h1>Olá, sou o assistente do Carlos Vasconcelos.</h1>
-<p>Posso ajudar com informações iniciais sobre viaturas, financiamento, retoma e marcação de contacto.</p>
+<p>Posso ajudar com informações iniciais sobre a viatura deste anúncio, financiamento, retoma e marcação de contacto.</p>
 </header>
 <div id="chat" class="chat"></div>
 <div class="panel">
 <div class="quick">
-<button data-txt="Quero saber se a viatura ainda está disponível.">Disponibilidade</button>
-<button data-txt="Pretendo fazer financiamento.">Financiamento</button>
+<button data-txt="Quero saber se esta viatura ainda está disponível.">Disponibilidade</button>
+<button data-txt="Pretendo fazer financiamento para esta viatura.">Financiamento</button>
 <button data-txt="Tenho uma viatura para retoma.">Retoma</button>
-<button data-txt="Quero marcar visita ou test-drive.">Marcar visita</button>
+<button data-txt="Quero marcar visita ou test-drive para esta viatura.">Marcar visita</button>
 </div>
 <form id="form" class="row">
 <input id="input" placeholder="Escreva a sua mensagem..." autocomplete="off">
@@ -43,7 +43,7 @@ const input=document.getElementById('input');
 const wa=document.getElementById('wa');
 const alertas=document.getElementById('alertas');
 const params=new URLSearchParams(location.search);
-const contexto={origem:params.get('origem')||'standvirtual',viatura:params.get('viatura')||''};
+const contexto={origem:params.get('origem')||'standvirtual',viatura:params.get('viatura')||'',link_anuncio:params.get('link_anuncio')||params.get('url')||params.get('anuncio')||''};
 let history=[];
 let lead={nome:'',telefone:'',viatura:contexto.viatura||'',orcamento:'',financiamento:'',retoma:'',horario:'',observacoes:''};
 function esc(s){return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
@@ -52,7 +52,7 @@ function label(k){return {nome:'Nome',telefone:'Telefone/WhatsApp',viatura:'Viat
 function mergeLead(next){if(!next)return;Object.keys(lead).forEach(k=>{if(next[k])lead[k]=String(next[k]).trim().slice(0,280)})}
 function leadText(){return Object.keys(lead).map(k=>label(k)+': '+(lead[k]||'Não indicado')).join('\n')}
 function resumo(){return history.map(m=>(m.role==='assistant'?'Assistente':'Cliente')+': '+m.content).join('\n').slice(-2200)}
-function updateWa(){const txt='Lead via assistente IA\n\nOrigem: '+contexto.origem+'\n\nDados essenciais:\n'+leadText()+'\n\nResumo da conversa:\n'+resumo()+'\n\nNota: confirmar disponibilidade, equipamento, despesas, garantia, financiamento e preço final.';wa.href='https://wa.me/351918404101?text='+encodeURIComponent(txt)}
+function updateWa(){const linkTxt=contexto.link_anuncio?'\nLink do anúncio/stock: '+contexto.link_anuncio:'';const txt='Lead via assistente IA\n\nOrigem: '+contexto.origem+linkTxt+'\n\nDados essenciais:\n'+leadText()+'\n\nResumo da conversa:\n'+resumo()+'\n\nNota: confirmar disponibilidade, equipamento, despesas, garantia, financiamento e preço final.';wa.href='https://wa.me/351918404101?text='+encodeURIComponent(txt)}
 async function send(text){
  if(!text.trim())return;
  add(text,'me'); history.push({role:'user',content:text}); updateWa(); input.value=''; input.disabled=true;
@@ -70,7 +70,7 @@ async function send(text){
 }
 form.onsubmit=e=>{e.preventDefault();send(input.value)};
 document.querySelectorAll('.quick button').forEach(b=>b.onclick=()=>send(b.dataset.txt));
-const inicio=contexto.viatura?'Viatura de interesse: '+contexto.viatura+'\nComo posso ajudar?':'Indique a viatura que pretende, ou escolha uma das opções rápidas.';
+const inicio=contexto.viatura?'Viatura de interesse: '+contexto.viatura+'\nComo posso ajudar em relação a esta viatura?':'Este assistente deve ser aberto através do link de uma viatura concreta do stock. Indique a viatura ou peça ao gestor o link correto do anúncio.';
 add(inicio,'bot');
 updateWa();
 </script>
