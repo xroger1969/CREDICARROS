@@ -53,17 +53,17 @@ let pendingCar=null;
 let pendingCars=[];
 function esc(s){return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
 function add(text,cls){const d=document.createElement('div');d.className='msg '+cls;d.innerHTML=esc(text);chat.appendChild(d);chat.scrollTop=chat.scrollHeight;return d}
+function filled(v){return String(v||'').trim()}
 function canSendLead(){return Boolean(lead.nome&&lead.telefone&&lead.viatura&&(lead.horario||lead.financiamento||lead.retoma||lead.orcamento||lead.observacoes))}
 function updateQuick(){if(lead.viatura){quick.classList.remove('hidden')}else{quick.classList.add('hidden')}}
 function updateSendLead(){if(canSendLead()){sendLead.href=whatsAppUrl();sendLead.classList.remove('hidden')}else{sendLead.classList.add('hidden')}}
 function addActions(){const wrap=document.createElement('div');wrap.className='inline-actions';const yes=document.createElement('button');yes.className='send-wa';yes.textContent='Sim, enviar ao Carlos';yes.onclick=()=>openWhatsApp();const no=document.createElement('button');no.textContent='Quero acrescentar algo';no.onclick=()=>{awaitingSendConfirm=false;add('Claro. Escreva o que pretende acrescentar.', 'bot');input.focus()};wrap.appendChild(yes);wrap.appendChild(no);chat.appendChild(wrap);chat.scrollTop=chat.scrollHeight}
 function addCarConfirm(item){pendingCar=item;pendingCars=[item];const wrap=document.createElement('div');wrap.className='inline-actions';const yes=document.createElement('button');yes.className='yes-car';yes.textContent='Sim, é esta';yes.onclick=()=>confirmCar(item);const no=document.createElement('button');no.textContent='Não, procurar outra';no.onclick=()=>{pendingCar=null;pendingCars=[];add('Sem problema. Escreva outra marca ou modelo do nosso stock.', 'bot');input.focus()};wrap.appendChild(yes);wrap.appendChild(no);chat.appendChild(wrap);chat.scrollTop=chat.scrollHeight}
 function addCarOptions(items){pendingCars=items;pendingCar=null;const wrap=document.createElement('div');wrap.className='car-options';items.forEach((item,index)=>{const b=document.createElement('button');b.textContent=(index+1)+'. '+item.title;b.onclick=()=>confirmCar(item);wrap.appendChild(b)});const other=document.createElement('button');other.textContent='Não é nenhum destes, procurar outra viatura';other.onclick=()=>{pendingCars=[];add('Sem problema. Escreva a marca e modelo de outra forma.', 'bot');input.focus()};wrap.appendChild(other);chat.appendChild(wrap);chat.scrollTop=chat.scrollHeight}
-function label(k){return {nome:'Nome',telefone:'Telefone/WhatsApp',viatura:'Viatura',orcamento:'Orçamento/prestação',financiamento:'Compra',retoma:'Retoma',horario:'Horário',observacoes:'Observações'}[k]||k}
+function label(k){return {nome:'Cliente',telefone:'Contacto',viatura:'Viatura',orcamento:'Prestação/Orçamento',financiamento:'Financiamento',retoma:'Retoma',horario:'Horário',observacoes:'Observações'}[k]||k}
 function mergeLead(next){if(!next)return;Object.keys(lead).forEach(k=>{if(next[k])lead[k]=String(next[k]).trim().slice(0,280)});updateSendLead()}
-function leadText(){return Object.keys(lead).map(k=>label(k)+': '+(lead[k]||'Não indicado')).join('\n')}
-function resumo(){return history.map(m=>(m.role==='assistant'?'Assistente':'Cliente')+': '+m.content).join('\n').slice(-2200)}
-function whatsAppUrl(){const linkTxt=contexto.link_anuncio?'\nLink do anúncio/stock: '+contexto.link_anuncio:'';const txt='Lead via assistente IA\n\nOrigem: '+contexto.origem+linkTxt+'\n\nDados essenciais:\n'+leadText()+'\n\nResumo da conversa:\n'+resumo()+'\n\nNota: confirmar disponibilidade, equipamento, despesas, garantia, financiamento e preço final.';return 'https://wa.me/351918404101?text='+encodeURIComponent(txt)}
+function leadText(){const ordem=['viatura','nome','telefone','financiamento','orcamento','retoma','horario','observacoes'];const linhas=['Nova lead - Assistente IA'];ordem.forEach(k=>{const v=filled(lead[k]);if(v)linhas.push(label(k)+': '+v)});if(filled(contexto.link_anuncio))linhas.push('Link: '+filled(contexto.link_anuncio));return linhas.join('\n')}
+function whatsAppUrl(){return 'https://wa.me/351918404101?text='+encodeURIComponent(leadText())}
 function openWhatsApp(){awaitingSendConfirm=false;updateSendLead();add('Sim, enviar ao Carlos.', 'me');window.open(whatsAppUrl(),'_blank','noopener')}
 function minimumLeadReady(reply='',estado={}){const core=lead.nome&&lead.telefone&&lead.viatura;if(!core)return false;if(lead.horario||lead.financiamento||lead.retoma||lead.orcamento||lead.observacoes)return true;if(estado&&estado.precisa_humano)return true;return /(passar|enviar|encaminhar|dar seguimento|confirmar a disponibilidade|Carlos ir[aá] confirmar)/i.test(String(reply||''))}
 function maybeAskToSend(reply='',estado={}){updateSendLead();if(sendQuestionShown)return;if(minimumLeadReady(reply,estado)){sendQuestionShown=true;awaitingSendConfirm=true;add('Já tenho a informação essencial. Pode enviar o pedido para o Carlos Vasconcelos no botão verde em baixo.', 'bot');addActions();updateSendLead()}}
@@ -111,7 +111,7 @@ async function send(text){
 }
 form.onsubmit=e=>{e.preventDefault();send(input.value)};
 document.querySelectorAll('.quick button').forEach(b=>b.onclick=()=>{if(!lead.viatura){add('Primeiro escolha a viatura do stock. Escreva a marca ou modelo, por exemplo “Tesla”, “MG” ou “Renault Zoe”.','bot');input.focus();return}send(b.dataset.txt)});
-sendLead.onclick=()=>{add('Vou enviar o pedido para o Carlos.', 'me')};
+sendLead.onclick=()=>{sendLead.href=whatsAppUrl();add('Vou enviar o pedido para o Carlos.', 'me')};
 const inicio=contexto.viatura?'Viatura de interesse: '+contexto.viatura+'\nComo posso ajudar em relação a esta viatura?':'Escreva a marca ou modelo da viatura que viu no nosso stock. Eu procuro e confirmo consigo qual é o carro.';
 add(inicio,'bot');
 updateQuick();updateSendLead();
