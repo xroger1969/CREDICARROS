@@ -5,6 +5,13 @@ Objetivo:
 - Recolher apenas dados essenciais para uma lead comercial automóvel.
 - Encaminhar para Carlos quando houver intenção real de compra.
 
+Âmbito obrigatório:
+- A conversa deve estar relacionada com a viatura do stock/anúncio indicada no contexto inicial.
+- Se o contexto inicial tiver uma viatura, nunca perguntes qual é a viatura. Usa essa viatura como assunto da conversa.
+- Se o contexto tiver link do anúncio ou stock, assume que o pedido veio desse anúncio.
+- Se o cliente quiser falar de outra viatura, pede para abrir um novo link específico dessa viatura ou para consultar o stock.
+- Se o contexto não tiver viatura, pede uma viatura concreta do stock antes de avançar.
+
 Dados permitidos:
 - nome
 - telefone ou WhatsApp
@@ -220,16 +227,16 @@ function validateModelPayload(raw, previousLead) {
     ? raw.alertas.map((a) => limitText(a, 140)).filter(Boolean).slice(0, 6)
     : [];
 
-  if (!reply) reply = 'Obrigado. Pode indicar o seu nome, contacto e a viatura que pretende?';
+  if (!reply) reply = 'Obrigado. Pode indicar o seu nome, contacto e melhor horário para o Carlos dar seguimento a esta viatura?';
 
   if (estado.fora_do_tema) {
-    reply = 'Consigo ajudar apenas com informação comercial sobre viaturas, financiamento, retoma e marcação de contacto. Para esse assunto, o ideal será falar diretamente com o gestor comercial.';
+    reply = 'Consigo ajudar apenas com informação comercial sobre a viatura deste anúncio, financiamento, retoma e marcação de contacto. Para outro assunto, o ideal será falar diretamente com o gestor comercial.';
     estado.precisa_humano = true;
     alertas.push('Resposta limitada por assunto fora do âmbito comercial.');
   }
 
   if (replyHasRiskyConfirmation(reply)) {
-    reply = 'Essa informação deve ser confirmada pelo gestor comercial. Posso recolher os seus dados principais — nome, contacto, viatura de interesse, financiamento, retoma e melhor horário — para o Carlos dar seguimento.';
+    reply = 'Essa informação deve ser confirmada pelo gestor comercial. Posso recolher os seus dados principais — nome, contacto, financiamento, retoma e melhor horário — para o Carlos dar seguimento a esta viatura.';
     estado.precisa_humano = true;
     alertas.push('Resposta substituída por segurança comercial.');
   }
@@ -255,12 +262,29 @@ export default async function handler(req, res) {
     const history = Array.isArray(body.history) ? body.history.slice(-8) : [];
     const contexto = {
       origem: limitText(body.contexto?.origem || 'standvirtual', 60),
-      viatura: limitText(body.contexto?.viatura || '', 160)
+      viatura: limitText(body.contexto?.viatura || '', 180),
+      link_anuncio: limitText(body.contexto?.link_anuncio || '', 500)
     };
     const currentLead = mergeLead({ viatura: contexto.viatura }, body.lead || {});
 
     if (!message.trim()) {
       res.status(400).json({ error: 'Mensagem vazia.' });
+      return;
+    }
+
+    if (!contexto.viatura && !currentLead.viatura) {
+      res.status(200).json({
+        reply: 'Para garantir um atendimento correto, este assistente deve ser usado com o link de uma viatura concreta do stock. Indique a viatura do anúncio ou peça ao gestor o link correto.',
+        lead: currentLead,
+        estado: {
+          fora_do_tema: false,
+          precisa_humano: true,
+          interesse_real: false,
+          campos_em_falta: ['viatura'],
+          motivo: 'viatura_em_falta_no_contexto'
+        },
+        alertas: ['Link aberto sem viatura associada.']
+      });
       return;
     }
 
@@ -278,7 +302,7 @@ export default async function handler(req, res) {
 
     const input = [
       { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: `Contexto inicial: ${JSON.stringify(contexto).slice(0, 800)}` },
+      { role: 'user', content: `Contexto inicial do anúncio: ${JSON.stringify(contexto).slice(0, 1200)}` },
       { role: 'user', content: `Lead atual permitida: ${JSON.stringify(currentLead).slice(0, 900)}` },
       ...safeHistory,
       { role: 'user', content: message }
