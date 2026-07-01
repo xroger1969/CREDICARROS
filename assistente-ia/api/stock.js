@@ -202,11 +202,6 @@ export default async function handler(req, res) {
   }
 
   const rawQuery = String(req.query.q || '').trim();
-  if (!rawQuery) {
-    res.status(400).json({ error: 'Pesquisa vazia.' });
-    return;
-  }
-
   const directUrl = directUrlFromQuery(rawQuery);
   if (directUrl && looksLikeCarUrl(directUrl)) {
     const title = titleFromUrl(directUrl);
@@ -232,12 +227,20 @@ export default async function handler(req, res) {
     }
 
     const html = await response.text();
-    const queryTerms = tokens(q).filter((x) => x.length >= 2);
-    const all = unique([...extractAnchors(html), ...extractJsonHints(html), ...extractVehicleTextHints(html)]);
-    const results = all
+    const all = unique([...extractAnchors(html), ...extractJsonHints(html), ...extractVehicleTextHints(html)])
       .map((item) => ({ ...item, title: safeTitle(item.title, item.url) || item.title }))
+      .filter((item) => item.title && !isBadTitle(item.title));
+
+    if (!q) {
+      const results = all.slice(0, 12).map(({ title, url }) => ({ title, url }));
+      res.status(200).json({ query: '', source: STOCK_URL, results });
+      return;
+    }
+
+    const queryTerms = tokens(q).filter((x) => x.length >= 2);
+    const results = all
       .map((item) => ({ ...item, score: scoreItem(item, queryTerms, q) }))
-      .filter((item) => item.title && !isBadTitle(item.title) && item.score > 0)
+      .filter((item) => item.score > 0)
       .sort((a, b) => b.score - a.score)
       .slice(0, 6)
       .map(({ title, url }) => ({ title, url }));
