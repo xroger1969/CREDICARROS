@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Criar link para assistente</title>
+<style>
+body{margin:0;background:#f3f6fb;font-family:Arial,sans-serif;color:#172033;padding:18px}main{max-width:760px;margin:0 auto;background:white;border-radius:20px;box-shadow:0 15px 40px #0002;overflow:hidden}header{background:#0b5cff;color:white;padding:24px}h1{margin:0 0 8px;font-size:30px}header p{margin:0;line-height:1.5}.box{padding:22px}label{display:block;font-weight:bold;margin:14px 0 6px}input,select{width:100%;box-sizing:border-box;border:1px solid #dbe3ef;border-radius:12px;padding:14px;font-size:16px}button,a{display:block;width:100%;box-sizing:border-box;text-align:center;border:0;border-radius:12px;padding:14px;margin-top:14px;font-weight:bold;font-size:16px;text-decoration:none}button{background:#0b5cff;color:white}.soft{background:#eef2f8;color:#172033}.note{color:#68758a;font-size:14px;line-height:1.45}.msg{background:#f8fafc;border:1px solid #dbe3ef;border-radius:12px;padding:14px;line-height:1.5;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<main>
+<header>
+<h1>Criar link para o assistente</h1>
+<p>Preenche a viatura e abre o bot já com essa informação.</p>
+</header>
+<div class="box">
+<form action="./" method="get">
+<label>Origem</label>
+<select name="origem">
+<option value="standvirtual">Standvirtual</option>
+<option value="whatsapp">WhatsApp</option>
+<option value="facebook">Facebook</option>
+<option value="instagram">Instagram</option>
+<option value="site">Site</option>
+</select>
+<label>Viatura</label>
+<input name="viatura" placeholder="Ex.: Renault Zoe Limited 50 de 2022">
+<button type="submit">Abrir bot com esta viatura</button>
+</form>
+<p class="note">Esta página não usa API do Standvirtual. A informação segue no próprio link.</p>
+<h2>Mensagem base para o Standvirtual</h2>
+<div class="msg">Olá, obrigado pelo contacto.
+
+Para lhe conseguir responder de forma mais rápida e personalizada sobre esta viatura, pode preencher este assistente comercial:
+
+COLE AQUI O LINK GERADO
+
+Em menos de 1 minuto indica se pretende financiamento, se tem retoma e qual o melhor horário para contacto. Assim consigo analisar o pedido e responder-lhe com informação mais concreta.
+
+Obrigado,
+Carlos Vasconcelos</div>
+<a class="soft" href="./">Abrir bot simples</a>
+</div>
+</main>
+</body>
+</html>
