@@ -1,8 +1,7 @@
 const STOCK_URL = process.env.STOCK_URL || 'https://spremium.standvirtual.com/inventory';
 
 const BAD_TITLE_PATTERNS = /[{}`;]|height\s*:|width\s*:|object-fit|cursor\s*:|\.ooa-|css|style|function|var\(|url\(|svg|path\b/i;
-const CAR_WORDS = /(tesla|mg|renault|fiat|nissan|mercedes|bmw|volkswagen|vw|audi|peugeot|citroen|opel|hyundai|kia|toyota|volvo|smart|mini|dacia|seat|cupra|ford|model|zoe|500e|leaf|id\.?3|id\.?4|eqc|eqa|ioniq|kona|twingo|megane|golf|polo|classe|long range|standard|plus|limited|icon)/i;
-const KNOWN_BRANDS = new Set(['tesla','mg','renault','fiat','nissan','mercedes','bmw','volkswagen','vw','audi','peugeot','citroen','opel','hyundai','kia','toyota','volvo','smart','mini','dacia','seat','cupra','ford']);
+const CAR_WORDS = /(porsche|tesla|mg|renault|fiat|nissan|mercedes|bmw|volkswagen|vw|audi|peugeot|citroen|opel|hyundai|kia|toyota|volvo|smart|mini|dacia|seat|cupra|ford|model|zoe|taycan|500e|leaf|id\.?3|id\.?4|eqc|eqa|ioniq|kona|twingo|megane|golf|polo|classe|long range|standard|plus|limited|icon)/i;
 
 function clean(value = '') {
   return String(value)
@@ -92,31 +91,28 @@ function phraseAppearsInTitle(title, phrase) {
 function scoreItem(item, queryTerms, queryRaw) {
   const titleNorm = normalise(item.title);
   const titleTokens = tokens(item.title);
-  const urlTokens = tokens(item.url);
   const queryNorm = normalise(queryRaw);
   let score = 0;
 
-  if (!queryNorm) return 0;
+  if (!queryNorm || queryTerms.length === 0) return 0;
 
-  // Marca curta ou marca conhecida: exige palavra exata no título.
-  // Ex.: "mg" só pode corresponder a "mg", não a fragmentos dentro de outras palavras.
-  if (queryTerms.length === 1 && (queryNorm.length <= 3 || KNOWN_BRANDS.has(queryNorm))) {
-    if (titleTokens.includes(queryNorm)) return 100;
-    return 0;
+  // Regra principal: pesquisa de uma só palavra só aceita palavra exata no título.
+  // Ex.: "porsche" só pode devolver Porsche; "mg" só pode devolver MG.
+  if (queryTerms.length === 1) {
+    return titleTokens.includes(queryNorm) ? 100 : 0;
   }
 
   // Pesquisa com frase: dá prioridade a sequência exata no título.
-  if (queryTerms.length > 1 && phraseAppearsInTitle(item.title, queryNorm)) score += 60;
+  if (phraseAppearsInTitle(item.title, queryNorm)) score += 60;
 
   for (const term of queryTerms) {
     if (!term) continue;
     if (titleTokens.includes(term)) score += term.length >= 4 ? 12 : 6;
     else if (term.length >= 4 && titleNorm.includes(term)) score += 2;
-    else if (urlTokens.includes(term)) score += 1;
   }
 
-  // Para pesquisas com várias palavras, exige que pelo menos uma palavra esteja exatamente no título.
-  if (queryTerms.length > 1 && !queryTerms.some((term) => titleTokens.includes(term))) return 0;
+  // Para várias palavras, exige que pelo menos uma esteja exatamente no título.
+  if (!queryTerms.some((term) => titleTokens.includes(term))) return 0;
 
   if (CAR_WORDS.test(item.title)) score += 2;
   return score;
