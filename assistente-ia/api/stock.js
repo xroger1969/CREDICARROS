@@ -1,7 +1,8 @@
 const STOCK_URL = process.env.STOCK_URL || 'https://spremium.standvirtual.com/inventory';
 
 const BAD_TITLE_PATTERNS = /[{}`;]|height\s*:|width\s*:|object-fit|cursor\s*:|\.ooa-|css|style|function|var\(|url\(|svg|path\b/i;
-const CAR_WORDS = /(tesla|renault|fiat|nissan|mercedes|bmw|volkswagen|vw|audi|peugeot|citroen|opel|hyundai|kia|toyota|volvo|smart|mini|dacia|seat|cupra|ford|model|zoe|500e|leaf|id\.?3|id\.?4|eqc|eqa|ioniq|kona|twingo|megane|golf|polo|classe|long range|standard|plus|limited|icon)/i;
+const CAR_WORDS = /(tesla|mg|renault|fiat|nissan|mercedes|bmw|volkswagen|vw|audi|peugeot|citroen|opel|hyundai|kia|toyota|volvo|smart|mini|dacia|seat|cupra|ford|model|zoe|500e|leaf|id\.?3|id\.?4|eqc|eqa|ioniq|kona|twingo|megane|golf|polo|classe|long range|standard|plus|limited|icon)/i;
+const KNOWN_BRANDS = new Set(['tesla','mg','renault','fiat','nissan','mercedes','bmw','volkswagen','vw','audi','peugeot','citroen','opel','hyundai','kia','toyota','volvo','smart','mini','dacia','seat','cupra','ford']);
 
 function clean(value = '') {
   return String(value)
@@ -25,6 +26,10 @@ function normalise(value = '') {
     .replace(/[^a-z0-9 ]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function tokens(value = '') {
+  return normalise(value).split(' ').filter(Boolean);
 }
 
 function absoluteUrl(href) {
@@ -78,13 +83,41 @@ function safeTitle(rawTitle, url) {
   return '';
 }
 
-function scoreItem(item, terms) {
-  const hay = normalise(`${item.title} ${item.url}`);
+function phraseAppearsInTitle(title, phrase) {
+  const hay = ' ' + normalise(title) + ' ';
+  const needle = ' ' + normalise(phrase) + ' ';
+  return hay.includes(needle);
+}
+
+function scoreItem(item, queryTerms, queryRaw) {
+  const titleNorm = normalise(item.title);
+  const titleTokens = tokens(item.title);
+  const urlTokens = tokens(item.url);
+  const queryNorm = normalise(queryRaw);
   let score = 0;
-  for (const term of terms) {
-    if (!term) continue;
-    if (hay.includes(term)) score += term.length >= 4 ? 3 : 1;
+
+  if (!queryNorm) return 0;
+
+  // Marca curta ou marca conhecida: exige palavra exata no título.
+  // Ex.: "mg" só pode corresponder a "mg", não a fragmentos dentro de outras palavras.
+  if (queryTerms.length === 1 && (queryNorm.length <= 3 || KNOWN_BRANDS.has(queryNorm))) {
+    if (titleTokens.includes(queryNorm)) return 100;
+    return 0;
   }
+
+  // Pesquisa com frase: dá prioridade a sequência exata no título.
+  if (queryTerms.length > 1 && phraseAppearsInTitle(item.title, queryNorm)) score += 60;
+
+  for (const term of queryTerms) {
+    if (!term) continue;
+    if (titleTokens.includes(term)) score += term.length >= 4 ? 12 : 6;
+    else if (term.length >= 4 && titleNorm.includes(term)) score += 2;
+    else if (urlTokens.includes(term)) score += 1;
+  }
+
+  // Para pesquisas com várias palavras, exige que pelo menos uma palavra esteja exatamente no título.
+  if (queryTerms.length > 1 && !queryTerms.some((term) => titleTokens.includes(term))) return 0;
+
   if (CAR_WORDS.test(item.title)) score += 2;
   return score;
 }
@@ -172,10 +205,11 @@ export default async function handler(req, res) {
     }
 
     const html = await response.text();
-    const terms = normalise(q).split(' ').filter((x) => x.length >= 2);
+    const queryTerms = tokens(q).filter((x) => x.length >= 2);
     const all = unique([...extractAnchors(html), ...extractJsonHints(html), ...extractVehicleTextHints(html)]);
     const results = all
-      .map((item) => ({ ...item, title: safeTitle(item.title, item.url) || item.title, score: scoreItem(item, terms) }))
+      .map((item) => ({ ...item, title: safeTitle(item.title, item.url) || item.title }))
+      .map((item) => ({ ...item, score: scoreItem(item, queryTerms, q) }))
       .filter((item) => item.title && !isBadTitle(item.title) && item.score > 0)
       .sort((a, b) => b.score - a.score)
       .slice(0, 6)
