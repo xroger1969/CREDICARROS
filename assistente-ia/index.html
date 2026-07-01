@@ -6,7 +6,7 @@
 <title>Assistente IA | Carlos Vasconcelos</title>
 <meta name="description" content="Assistente comercial com IA para pedidos sobre viaturas, financiamento e retoma.">
 <style>
-:root{--blue:#0b5cff;--blue2:#052b73;--bg:#f3f6fb;--txt:#172033;--muted:#68758a;--line:#dbe3ef;--card:#fff;--green:#18a957;--warn:#a56400}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at top left,#dfeaff,transparent 34%),var(--bg);font-family:Arial,sans-serif;color:var(--txt);padding:14px;display:flex;align-items:center;justify-content:center}.app{width:100%;max-width:820px;background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:0 18px 50px #0002;overflow:hidden}header{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;padding:24px}.tag{text-transform:uppercase;letter-spacing:.09em;font-size:12px;opacity:.85;margin-bottom:7px}h1{margin:0 0 8px;font-size:clamp(25px,4vw,38px);line-height:1.05}header p{margin:0;line-height:1.5;opacity:.94}.chat{height:430px;overflow:auto;padding:18px;background:#fbfcff;display:flex;flex-direction:column;gap:12px}.msg{max-width:86%;padding:13px 15px;border-radius:17px;line-height:1.45;font-size:15px;white-space:pre-wrap}.bot{align-self:flex-start;background:#eef4ff;border:1px solid #d9e7ff}.me{align-self:flex-end;background:var(--blue);color:white}.panel{border-top:1px solid var(--line);padding:14px;background:white}.quick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}.quick button{border:1px solid var(--line);border-radius:999px;background:white;padding:10px 12px;font-weight:bold;cursor:pointer}.quick button:hover{border-color:var(--blue);color:var(--blue)}.row{display:flex;gap:10px}.row input{flex:1;border:1px solid var(--line);border-radius:14px;padding:14px;font-size:16px}.row button{border:0;border-radius:14px;padding:14px 16px;background:var(--blue);color:white;font-weight:bold;font-size:15px;cursor:pointer}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.actions a{display:block;text-align:center;text-decoration:none;border-radius:14px;padding:13px 14px;font-weight:bold}.wa{background:var(--green);color:#fff}.stock{background:#172033;color:#fff}.small{font-size:13px;color:var(--muted);line-height:1.4;margin-top:10px}.alert{font-size:13px;color:var(--warn);line-height:1.35;margin-top:8px}.hidden{display:none}@media(max-width:560px){body{padding:8px}.app{border-radius:16px}.chat{height:420px}.row{flex-direction:column}.row button{width:100%}.actions{grid-template-columns:1fr}.msg{max-width:94%}}
+:root{--blue:#0b5cff;--blue2:#052b73;--bg:#f3f6fb;--txt:#172033;--muted:#68758a;--line:#dbe3ef;--card:#fff;--green:#18a957;--warn:#a56400}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at top left,#dfeaff,transparent 34%),var(--bg);font-family:Arial,sans-serif;color:var(--txt);padding:14px;display:flex;align-items:center;justify-content:center}.app{width:100%;max-width:820px;background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:0 18px 50px #0002;overflow:hidden}header{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;padding:24px}.tag{text-transform:uppercase;letter-spacing:.09em;font-size:12px;opacity:.85;margin-bottom:7px}h1{margin:0 0 8px;font-size:clamp(25px,4vw,38px);line-height:1.05}header p{margin:0;line-height:1.5;opacity:.94}.chat{height:460px;overflow:auto;padding:18px;background:#fbfcff;display:flex;flex-direction:column;gap:12px}.msg{max-width:86%;padding:13px 15px;border-radius:17px;line-height:1.45;font-size:15px;white-space:pre-wrap}.bot{align-self:flex-start;background:#eef4ff;border:1px solid #d9e7ff}.me{align-self:flex-end;background:var(--blue);color:white}.panel{border-top:1px solid var(--line);padding:14px;background:white}.quick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}.quick button,.inline-actions button,.inline-actions a{border:1px solid var(--line);border-radius:999px;background:white;padding:10px 12px;font-weight:bold;cursor:pointer;text-decoration:none;color:var(--txt);font-size:14px}.quick button:hover,.inline-actions button:hover,.inline-actions a:hover{border-color:var(--blue);color:var(--blue)}.inline-actions{align-self:flex-start;display:flex;flex-wrap:wrap;gap:8px;margin-top:-4px}.send-wa{background:var(--green)!important;color:white!important;border-color:var(--green)!important}.row{display:flex;gap:10px}.row input{flex:1;border:1px solid var(--line);border-radius:14px;padding:14px;font-size:16px}.row button{border:0;border-radius:14px;padding:14px 16px;background:var(--blue);color:white;font-weight:bold;font-size:15px;cursor:pointer}.actions{display:grid;grid-template-columns:1fr;gap:10px;margin-top:12px}.actions a{display:block;text-align:center;text-decoration:none;border-radius:14px;padding:13px 14px;font-weight:bold}.stock{background:#172033;color:#fff}.small{font-size:13px;color:var(--muted);line-height:1.4;margin-top:10px}.alert{font-size:13px;color:var(--warn);line-height:1.35;margin-top:8px}.hidden{display:none}@media(max-width:560px){body{padding:8px}.app{border-radius:16px}.chat{height:440px}.row{flex-direction:column}.row button{width:100%}.msg{max-width:94%}}
 </style>
 </head>
 <body>
@@ -29,7 +29,6 @@
 <button type="submit">Enviar</button>
 </form>
 <div class="actions">
-<a id="wa" class="wa" href="#" target="_blank" rel="noopener">Enviar pedido por WhatsApp</a>
 <a class="stock" href="https://spremium.standvirtual.com/inventory" target="_blank" rel="noopener">Ver stock</a>
 </div>
 <div id="alertas" class="alert"></div>
@@ -40,22 +39,29 @@
 const chat=document.getElementById('chat');
 const form=document.getElementById('form');
 const input=document.getElementById('input');
-const wa=document.getElementById('wa');
 const alertas=document.getElementById('alertas');
 const params=new URLSearchParams(location.search);
 const contexto={origem:params.get('origem')||'standvirtual',viatura:params.get('viatura')||'',link_anuncio:params.get('link_anuncio')||params.get('url')||params.get('anuncio')||''};
 let history=[];
 let lead={nome:'',telefone:'',viatura:contexto.viatura||'',orcamento:'',financiamento:'',retoma:'',horario:'',observacoes:''};
+let sendQuestionShown=false;
+let awaitingSendConfirm=false;
 function esc(s){return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
-function add(text,cls){const d=document.createElement('div');d.className='msg '+cls;d.innerHTML=esc(text);chat.appendChild(d);chat.scrollTop=chat.scrollHeight;}
+function add(text,cls){const d=document.createElement('div');d.className='msg '+cls;d.innerHTML=esc(text);chat.appendChild(d);chat.scrollTop=chat.scrollHeight;return d}
+function addActions(){const wrap=document.createElement('div');wrap.className='inline-actions';const yes=document.createElement('button');yes.className='send-wa';yes.textContent='Sim, enviar ao Carlos';yes.onclick=()=>openWhatsApp();const no=document.createElement('button');no.textContent='Quero acrescentar algo';no.onclick=()=>{awaitingSendConfirm=false;add('Claro. Escreva o que pretende acrescentar.', 'bot');input.focus()};wrap.appendChild(yes);wrap.appendChild(no);chat.appendChild(wrap);chat.scrollTop=chat.scrollHeight}
 function label(k){return {nome:'Nome',telefone:'Telefone/WhatsApp',viatura:'Viatura',orcamento:'Orçamento/prestação',financiamento:'Compra',retoma:'Retoma',horario:'Horário',observacoes:'Observações'}[k]||k}
 function mergeLead(next){if(!next)return;Object.keys(lead).forEach(k=>{if(next[k])lead[k]=String(next[k]).trim().slice(0,280)})}
 function leadText(){return Object.keys(lead).map(k=>label(k)+': '+(lead[k]||'Não indicado')).join('\n')}
 function resumo(){return history.map(m=>(m.role==='assistant'?'Assistente':'Cliente')+': '+m.content).join('\n').slice(-2200)}
-function updateWa(){const linkTxt=contexto.link_anuncio?'\nLink do anúncio/stock: '+contexto.link_anuncio:'';const txt='Lead via assistente IA\n\nOrigem: '+contexto.origem+linkTxt+'\n\nDados essenciais:\n'+leadText()+'\n\nResumo da conversa:\n'+resumo()+'\n\nNota: confirmar disponibilidade, equipamento, despesas, garantia, financiamento e preço final.';wa.href='https://wa.me/351918404101?text='+encodeURIComponent(txt)}
+function whatsAppUrl(){const linkTxt=contexto.link_anuncio?'\nLink do anúncio/stock: '+contexto.link_anuncio:'';const txt='Lead via assistente IA\n\nOrigem: '+contexto.origem+linkTxt+'\n\nDados essenciais:\n'+leadText()+'\n\nResumo da conversa:\n'+resumo()+'\n\nNota: confirmar disponibilidade, equipamento, despesas, garantia, financiamento e preço final.';return 'https://wa.me/351918404101?text='+encodeURIComponent(txt)}
+function openWhatsApp(){awaitingSendConfirm=false;add('Sim, enviar ao Carlos.', 'me');window.open(whatsAppUrl(),'_blank','noopener')}
+function requiredMissing(){const required=['nome','telefone','viatura','financiamento','retoma','horario'];return required.filter(k=>!String(lead[k]||'').trim())}
+function maybeAskToSend(){if(sendQuestionShown)return;const missing=requiredMissing();if(missing.length===0){sendQuestionShown=true;awaitingSendConfirm=true;add('Já tenho a informação essencial. Quer que envie o pedido para o Carlos Vasconcelos?', 'bot');addActions()}}
+function typedYes(text){return /^(sim|s|ok|pode enviar|envia|enviar|claro|confirmo|força)\b/i.test(String(text||'').trim())}
 async function send(text){
  if(!text.trim())return;
- add(text,'me'); history.push({role:'user',content:text}); updateWa(); input.value=''; input.disabled=true;
+ if(awaitingSendConfirm&&typedYes(text)){openWhatsApp();input.value='';return}
+ add(text,'me'); history.push({role:'user',content:text}); input.value=''; input.disabled=true;
  add('A analisar...','bot'); const loading=chat.lastChild; alertas.textContent='';
  try{
   const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,history,contexto,lead})});
@@ -64,7 +70,7 @@ async function send(text){
   const reply=data.reply||data.error||'Não consegui responder agora. Pode contactar diretamente o Carlos pelo WhatsApp 918404101.';
   add(reply,'bot'); history.push({role:'assistant',content:reply});
   if(Array.isArray(data.alertas)&&data.alertas.length){alertas.textContent=data.alertas.join(' · ')}
-  updateWa();
+  maybeAskToSend();
  }catch(e){loading.remove();add('Não consegui ligar à IA neste momento. Pode enviar o pedido diretamente pelo WhatsApp.', 'bot')}
  input.disabled=false; input.focus();
 }
@@ -72,7 +78,6 @@ form.onsubmit=e=>{e.preventDefault();send(input.value)};
 document.querySelectorAll('.quick button').forEach(b=>b.onclick=()=>send(b.dataset.txt));
 const inicio=contexto.viatura?'Viatura de interesse: '+contexto.viatura+'\nComo posso ajudar em relação a esta viatura?':'Este assistente deve ser aberto através do link de uma viatura concreta do stock. Indique a viatura ou peça ao gestor o link correto do anúncio.';
 add(inicio,'bot');
-updateWa();
 </script>
 </body>
 </html>
