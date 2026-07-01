@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Criar link IA</title>
+<style>
+body{margin:0;background:#f3f6fb;font-family:Arial,sans-serif;color:#172033;padding:18px}main{max-width:720px;margin:0 auto;background:white;border-radius:20px;box-shadow:0 15px 40px #0002;overflow:hidden}header{background:#0b5cff;color:white;padding:24px}h1{margin:0 0 8px;font-size:30px}header p{margin:0;line-height:1.5}.box{padding:22px}label{display:block;font-weight:bold;margin:14px 0 6px}input{width:100%;box-sizing:border-box;border:1px solid #dbe3ef;border-radius:12px;padding:14px;font-size:16px}button,a{display:block;width:100%;box-sizing:border-box;text-align:center;border:0;border-radius:12px;padding:14px;margin-top:14px;font-weight:bold;font-size:16px;text-decoration:none}button{background:#0b5cff;color:white}.soft{background:#eef2f8;color:#172033}.note{color:#68758a;font-size:14px;line-height:1.45}.msg{background:#f8fafc;border:1px solid #dbe3ef;border-radius:12px;padding:14px;line-height:1.5;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<main>
+<header>
+<h1>Criar link para o assistente IA</h1>
+<p>Preenche a viatura do stock e abre o bot já com essa informação.</p>
+</header>
+<div class="box">
+<form action="./" method="get">
+<input type="hidden" name="origem" value="standvirtual">
+<label>Viatura</label>
+<input name="viatura" required placeholder="Ex.: Tesla Model 3 Standard Plus 2020 - 22.990€">
+<label>Link do anúncio ou stock</label>
+<input name="link_anuncio" placeholder="Colar aqui o link do anúncio ou do stock">
+<button type="submit">Abrir bot IA com esta viatura</button>
+</form>
+<p class="note">A IA recebe a viatura através do link e já não precisa perguntar qual é o carro.</p>
+<h2>Mensagem base</h2>
+<div class="msg">Olá, obrigado pelo contacto.
+
+Para lhe responder de forma mais rápida e personalizada sobre esta viatura, pode preencher este assistente comercial:
+
+COLE AQUI O LINK GERADO
+
+O assistente já identifica a viatura do anúncio e recolhe apenas os dados necessários.
+
+Obrigado,
+Carlos Vasconcelos</div>
+<a class="soft" href="./">Abrir bot IA simples</a>
+</div>
+</main>
+</body>
+</html>
