@@ -17,6 +17,20 @@ function clean(value = '') {
     .trim();
 }
 
+function formatTitle(value = '') {
+  return clean(value)
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .replace(/\bMg\b/g, 'MG')
+    .replace(/\bVw\b/g, 'VW')
+    .replace(/\bBmw\b/g, 'BMW')
+    .replace(/\bEv\b/g, 'EV')
+    .replace(/\bRwd\b/g, 'RWD')
+    .replace(/\bAwd\b/g, 'AWD')
+    .replace(/\bKwh\b/g, 'kWh')
+    .replace(/\bId\b/g, 'ID');
+}
+
 function normalise(value = '') {
   return clean(value)
     .toLowerCase()
@@ -67,7 +81,7 @@ function titleFromUrl(url) {
       .replace(/\s+/g, ' ')
       .trim();
     if (!candidate || isBadTitle(candidate)) return '';
-    return clean(candidate).slice(0, 120);
+    return formatTitle(candidate).slice(0, 120);
   } catch {
     return '';
   }
@@ -75,10 +89,10 @@ function titleFromUrl(url) {
 
 function safeTitle(rawTitle, url) {
   const title = clean(rawTitle).slice(0, 180);
-  if (!isBadTitle(title) && CAR_WORDS.test(title)) return title;
+  if (!isBadTitle(title) && CAR_WORDS.test(title)) return formatTitle(title);
   const fromUrl = titleFromUrl(url);
   if (fromUrl) return fromUrl;
-  if (!isBadTitle(title)) return title.slice(0, 100);
+  if (!isBadTitle(title)) return formatTitle(title).slice(0, 100);
   return '';
 }
 
@@ -170,7 +184,7 @@ function extractVehicleTextHints(html) {
   for (const m of matches.slice(0, 80)) {
     const title = clean(m).replace(BAD_TITLE_PATTERNS, '').slice(0, 100);
     if (isBadTitle(title) || !CAR_WORDS.test(title)) continue;
-    items.push({ title, url: STOCK_URL });
+    items.push({ title: formatTitle(title), url: STOCK_URL });
   }
   return items;
 }
