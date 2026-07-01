@@ -1,7 +1,7 @@
 const STOCK_URL = process.env.STOCK_URL || 'https://spremium.standvirtual.com/inventory';
 
 const BAD_TITLE_PATTERNS = /[{}`;]|height\s*:|width\s*:|object-fit|cursor\s*:|\.ooa-|css|style|function|var\(|url\(|svg|path\b/i;
-const CAR_WORDS = /(porsche|tesla|mg|renault|fiat|nissan|mercedes|bmw|volkswagen|vw|audi|peugeot|citroen|opel|hyundai|kia|toyota|volvo|smart|mini|dacia|seat|cupra|ford|model|zoe|taycan|500e|leaf|id\.?3|id\.?4|eqc|eqa|ioniq|kona|twingo|megane|golf|polo|classe|long range|standard|plus|limited|icon)/i;
+const CAR_WORDS = /(porsche|tesla|mg|renault|fiat|nissan|mercedes|bmw|volkswagen|vw|audi|peugeot|citroen|opel|hyundai|kia|toyota|volvo|smart|mini|dacia|seat|cupra|ford|model|zoe|taycan|e tron|etron|q4|500e|leaf|id\.?3|id\.?4|eqc|eqa|ioniq|kona|twingo|megane|golf|polo|classe|long range|standard|plus|limited|icon|quattro|s line)/i;
 
 function clean(value = '') {
   return String(value)
@@ -28,7 +28,11 @@ function formatTitle(value = '') {
     .replace(/\bRwd\b/g, 'RWD')
     .replace(/\bAwd\b/g, 'AWD')
     .replace(/\bKwh\b/g, 'kWh')
-    .replace(/\bId\b/g, 'ID');
+    .replace(/\bId\b/g, 'ID')
+    .replace(/\bE Tron\b/g, 'e-tron')
+    .replace(/\bEtron\b/g, 'e-tron')
+    .replace(/\bQ4\b/g, 'Q4')
+    .replace(/\bS Line\b/g, 'S line');
 }
 
 function normalise(value = '') {
@@ -71,7 +75,7 @@ function titleFromUrl(url) {
     const u = new URL(url);
     const parts = u.pathname.split('/').filter(Boolean);
     let candidate = parts[parts.length - 1] || '';
-    if (/^id[0-9a-z]+$/i.test(candidate) && parts.length > 1) candidate = parts[parts.length - 2];
+    if (/^id[0-9a-z]+(?:\.html?)?$/i.test(candidate) && parts.length > 1) candidate = parts[parts.length - 2];
     candidate = decodeURIComponent(candidate)
       .replace(/\.html?$/i, '')
       .replace(/^anuncio[-_]?/i, '')
@@ -96,6 +100,12 @@ function safeTitle(rawTitle, url) {
   return '';
 }
 
+function directUrlFromQuery(query = '') {
+  const match = String(query).match(/https?:\/\/\S*standvirtual\.com\S*/i);
+  if (!match) return '';
+  return match[0].replace(/[)\],.;]+$/g, '');
+}
+
 function phraseAppearsInTitle(title, phrase) {
   const hay = ' ' + normalise(title) + ' ';
   const needle = ' ' + normalise(phrase) + ' ';
@@ -110,13 +120,10 @@ function scoreItem(item, queryTerms, queryRaw) {
 
   if (!queryNorm || queryTerms.length === 0) return 0;
 
-  // Regra principal: pesquisa de uma só palavra só aceita palavra exata no título.
-  // Ex.: "porsche" só pode devolver Porsche; "mg" só pode devolver MG.
   if (queryTerms.length === 1) {
     return titleTokens.includes(queryNorm) ? 100 : 0;
   }
 
-  // Pesquisa com frase: dá prioridade a sequência exata no título.
   if (phraseAppearsInTitle(item.title, queryNorm)) score += 60;
 
   for (const term of queryTerms) {
@@ -125,7 +132,6 @@ function scoreItem(item, queryTerms, queryRaw) {
     else if (term.length >= 4 && titleNorm.includes(term)) score += 2;
   }
 
-  // Para várias palavras, exige que pelo menos uma esteja exatamente no título.
   if (!queryTerms.some((term) => titleTokens.includes(term))) return 0;
 
   if (CAR_WORDS.test(item.title)) score += 2;
@@ -195,11 +201,22 @@ export default async function handler(req, res) {
     return;
   }
 
-  const q = String(req.query.q || '').trim().slice(0, 80);
-  if (!q) {
+  const rawQuery = String(req.query.q || '').trim();
+  if (!rawQuery) {
     res.status(400).json({ error: 'Pesquisa vazia.' });
     return;
   }
+
+  const directUrl = directUrlFromQuery(rawQuery);
+  if (directUrl && looksLikeCarUrl(directUrl)) {
+    const title = titleFromUrl(directUrl);
+    if (title) {
+      res.status(200).json({ query: rawQuery, source: 'direct_url', results: [{ title, url: directUrl }] });
+      return;
+    }
+  }
+
+  const q = rawQuery.slice(0, 120);
 
   try {
     const response = await fetch(STOCK_URL, {
