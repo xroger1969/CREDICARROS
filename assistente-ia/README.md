@@ -17,18 +17,35 @@ OPENAI_MODEL=gpt-5.5
 
 6. Fazer Deploy.
 
-## Links úteis depois do deploy
+## Uso recomendado
 
-Bot simples:
+Depois do deploy, usa primeiro o gerador de links:
 
 ```text
-https://o-teu-projeto.vercel.app/
+https://o-teu-projeto.vercel.app/link.html
 ```
 
-Bot com origem e viatura:
+Nesse gerador, preenches:
 
 ```text
-https://o-teu-projeto.vercel.app/?origem=standvirtual&viatura=Renault%20Zoe%20Limited%2050
+viatura do stock
+link do anúncio ou stock
+```
+
+Depois abres o bot já com a viatura preenchida e copias esse link para enviar ao cliente no Standvirtual.
+
+## Links úteis depois do deploy
+
+Gerador de links:
+
+```text
+https://o-teu-projeto.vercel.app/link.html
+```
+
+Bot com origem, viatura e link do anúncio:
+
+```text
+https://o-teu-projeto.vercel.app/?origem=standvirtual&viatura=Renault%20Zoe%20Limited%2050&link_anuncio=https%3A%2F%2Fspremium.standvirtual.com%2Finventory
 ```
 
 ## Segurança da chave
@@ -68,6 +85,8 @@ documentos pessoais
 ## Regras comerciais do bot
 
 O bot não confirma disponibilidade, preço final, equipamento, despesas, garantia ou aprovação de crédito como definitivo. Esses pontos devem ser sempre confirmados pelo gestor comercial.
+
+O bot deve ser usado preferencialmente através de um link de uma viatura concreta do stock. Se for aberto sem viatura associada, pede uma viatura concreta antes de avançar.
 
 ## Controlo técnico
 
