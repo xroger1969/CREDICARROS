@@ -2,6 +2,7 @@ const STOCK_URL = process.env.STOCK_URL || 'https://spremium.standvirtual.com/in
 
 const BAD_TITLE_PATTERNS = /[{}`;]|height\s*:|width\s*:|object-fit|cursor\s*:|\.ooa-|css|style|function|var\(|url\(|svg|path\b/i;
 const CAR_WORDS = /(porsche|tesla|mg|renault|fiat|nissan|mercedes|bmw|volkswagen|vw|audi|peugeot|citroen|opel|hyundai|kia|toyota|volvo|smart|mini|dacia|seat|cupra|ford|model|zoe|taycan|e tron|etron|q4|500e|leaf|id\.?3|id\.?4|eqc|eqa|ioniq|kona|twingo|megane|golf|polo|classe|long range|standard|plus|limited|icon|quattro|s line)/i;
+const GENERIC_TITLES = new Set(['inventory', 'stock', 'carros', 'anuncio', 'anúncio', 'spremium', 'standvirtual', 'ver stock', 'detalhes', 'ver detalhes']);
 
 function clean(value = '') {
   return String(value)
@@ -58,12 +59,16 @@ function absoluteUrl(href) {
 }
 
 function looksLikeCarUrl(url) {
-  return /standvirtual\.com|spremium\.standvirtual\.com/i.test(url) && /(carros|inventory|anuncio|auto|id[0-9a-z])/i.test(url);
+  if (!/standvirtual\.com|spremium\.standvirtual\.com/i.test(url)) return false;
+  if (/\/inventory\/?(?:$|[?#])/i.test(url)) return false;
+  return /(carros|anuncio|auto|id[0-9a-z])/i.test(url);
 }
 
 function isBadTitle(title) {
   const t = clean(title);
+  const n = normalise(t);
   if (!t || t.length < 3) return true;
+  if (GENERIC_TITLES.has(n)) return true;
   if (BAD_TITLE_PATTERNS.test(t)) return true;
   if (t.length > 120 && !CAR_WORDS.test(t)) return true;
   if ((t.match(/[{};]/g) || []).length > 0) return true;
