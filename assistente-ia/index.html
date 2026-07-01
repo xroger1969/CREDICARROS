@@ -59,8 +59,9 @@ function leadText(){return Object.keys(lead).map(k=>label(k)+': '+(lead[k]||'Nã
 function resumo(){return history.map(m=>(m.role==='assistant'?'Assistente':'Cliente')+': '+m.content).join('\n').slice(-2200)}
 function whatsAppUrl(){const linkTxt=contexto.link_anuncio?'\nLink do anúncio/stock: '+contexto.link_anuncio:'';const txt='Lead via assistente IA\n\nOrigem: '+contexto.origem+linkTxt+'\n\nDados essenciais:\n'+leadText()+'\n\nResumo da conversa:\n'+resumo()+'\n\nNota: confirmar disponibilidade, equipamento, despesas, garantia, financiamento e preço final.';return 'https://wa.me/351918404101?text='+encodeURIComponent(txt)}
 function openWhatsApp(){awaitingSendConfirm=false;add('Sim, enviar ao Carlos.', 'me');window.open(whatsAppUrl(),'_blank','noopener')}
-function requiredMissing(){const required=['nome','telefone','viatura','financiamento','retoma','horario'];return required.filter(k=>!String(lead[k]||'').trim())}
-function maybeAskToSend(){if(sendQuestionShown)return;const missing=requiredMissing();if(missing.length===0){sendQuestionShown=true;awaitingSendConfirm=true;add('Já tenho a informação essencial. Quer que envie o pedido para o Carlos Vasconcelos?', 'bot');addActions()}}
+function minimumLeadReady(reply='',estado={}){const core=lead.nome&&lead.telefone&&lead.viatura;if(!core)return false;if(lead.horario||lead.financiamento||lead.retoma||lead.observacoes)return true;if(estado&&estado.precisa_humano)return true;return /(passar|enviar|encaminhar|dar seguimento|confirmar a disponibilidade|Carlos ir[aá] confirmar)/i.test(String(reply||''))}
+function requiredMissing(){const missing=[];if(!lead.nome)missing.push('nome');if(!lead.telefone)missing.push('telefone');if(!lead.viatura)missing.push('viatura');return missing}
+function maybeAskToSend(reply='',estado={}){if(sendQuestionShown)return;if(minimumLeadReady(reply,estado)){sendQuestionShown=true;awaitingSendConfirm=true;add('Já tenho a informação essencial. Quer que envie o pedido para o Carlos Vasconcelos?', 'bot');addActions()}}
 function typedYes(text){return /^(sim|s|ok|pode enviar|envia|enviar|claro|confirmo|força)\b/i.test(String(text||'').trim())}
 function typedNumber(text){const n=Number(String(text||'').trim());if(Number.isInteger(n)&&n>=1&&n<=pendingCars.length)return n;return 0}
 function confirmCar(item){pendingCar=null;pendingCars=[];contexto.viatura=item.title;contexto.link_anuncio=item.url;lead.viatura=item.title;add('Escolhi: '+item.title, 'me');add('Perfeito. Vamos tratar desta viatura. Pretende compra a pronto ou financiamento? Tem alguma viatura para retoma?', 'bot');history.push({role:'assistant',content:'Cliente confirmou a viatura do stock: '+item.title})}
@@ -99,7 +100,7 @@ async function send(text){
   const reply=data.reply||data.error||'Não consegui responder agora. Pode contactar diretamente o Carlos pelo WhatsApp 918404101.';
   add(reply,'bot'); history.push({role:'assistant',content:reply});
   if(Array.isArray(data.alertas)&&data.alertas.length){alertas.textContent=data.alertas.join(' · ')}
-  maybeAskToSend();
+  maybeAskToSend(reply,data.estado||{});
  }catch(e){loading.remove();add('Não consegui ligar à IA neste momento. Pode enviar o pedido diretamente pelo WhatsApp.', 'bot')}
  input.disabled=false; input.focus();
 }
