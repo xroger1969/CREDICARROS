@@ -22,6 +22,11 @@ Dados permitidos:
 - melhor horário para contacto
 - observações comerciais simples
 
+Identificação do cliente:
+- Nunca inventes nomes de clientes.
+- Só podes tratar o cliente pelo nome se esse nome já existir na lead atual ou se o cliente o tiver escrito claramente.
+- Se o nome ainda não foi recolhido, não uses nomes na resposta. Pede apenas nome e contacto/WhatsApp.
+
 Dados proibidos:
 - NIF
 - morada completa
@@ -157,6 +162,26 @@ function mergeLead(current, extracted) {
   return base;
 }
 
+function normalizeText(value = '') {
+  return String(value)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function nameAppearsInMessage(name, message) {
+  const n = normalizeText(name);
+  const m = normalizeText(message);
+  return Boolean(n && m.includes(n));
+}
+
+function removeUnconfirmedName(reply, previousLead) {
+  if (previousLead?.nome) return reply;
+  return String(reply || '').replace(/^(Obrigado|Obrigada|Perfeito|Perfeita|Certo|Claro|Combinado),\s+[^.!?]{2,40}\.\s*/i, '$1. ');
+}
+
 function extractText(data) {
   if (typeof data.output_text === 'string') return data.output_text;
   const chunks = [];
@@ -211,9 +236,13 @@ function replyHasRiskyConfirmation(reply) {
   return /(est[aá]|continua|temos)\s+dispon[ií]vel|financiamento\s+(aprovado|garantido)|cr[eé]dito\s+(aprovado|garantido)|pre[cç]o\s+final\s+(é|fica)|garantia\s+(confirmada|inclu[ií]da)|equipamento\s+confirmado/i.test(text);
 }
 
-function validateModelPayload(raw, previousLead) {
+function validateModelPayload(raw, previousLead, message = '') {
   const lead = mergeLead(previousLead, raw?.dados_recolhidos || {});
+  if (!previousLead?.nome && lead.nome && !nameAppearsInMessage(lead.nome, message)) {
+    lead.nome = '';
+  }
   let reply = limitText(raw?.resposta_cliente, 520);
+  reply = removeUnconfirmedName(reply, previousLead);
   const estado = {
     fora_do_tema: Boolean(raw?.estado?.fora_do_tema),
     precisa_humano: Boolean(raw?.estado?.precisa_humano),
@@ -336,7 +365,7 @@ export default async function handler(req, res) {
     }
 
     const parsed = parseModelJson(data);
-    const safe = validateModelPayload(parsed, currentLead);
+    const safe = validateModelPayload(parsed, currentLead, message);
     res.status(200).json(safe);
   } catch (err) {
     res.status(500).json({ error: 'Erro inesperado no assistente.' });
