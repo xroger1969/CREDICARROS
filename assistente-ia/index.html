@@ -32,7 +32,10 @@ function setMsg(el,t){if(el){el.innerHTML=esc(t);if(el.classList.contains('bot')
 function filled(v){return String(v||'').trim()}
 function canSend(){return !!(lead.nome&&lead.telefone&&lead.viatura&&(lead.financiamento||lead.retoma||lead.horario||lead.orcamento||lead.observacoes))}
 function leadText(){const lines=['Nova lead - Assistente IA'];if(filled(lead.viatura))lines.push('Viatura/Pedido: '+lead.viatura);if(filled(lead.financiamento))lines.push('Financiamento: '+lead.financiamento);if(filled(lead.orcamento))lines.push('Entrada/Prestação: '+lead.orcamento);if(filled(lead.retoma))lines.push('Retoma: '+lead.retoma);if(filled(lead.horario))lines.push('Horário/Visita: '+lead.horario);if(filled(lead.observacoes))lines.push('Observações: '+lead.observacoes);if(filled(lead.nome))lines.push('Cliente: '+lead.nome);if(filled(lead.telefone))lines.push('Contacto: '+lead.telefone);if(filled(contexto.link_anuncio))lines.push('Link: '+contexto.link_anuncio);return lines.join('\n')}
-function wa(){return 'https://wa.me/351918404101?text='+encodeURIComponent(leadText())}
+function b64(t){return btoa(unescape(encodeURIComponent(t))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function reminderUrl(){return location.origin+'/lembrete.html#lead='+b64(leadText())}
+function whatsappText(){return leadText()+'\n\nLembrete iPhone para Carlos: '+reminderUrl()}
+function wa(){return 'https://wa.me/351918404101?text='+encodeURIComponent(whatsappText())}
 function updateSend(){if(canSend()){sendLead.href=wa();sendLead.classList.remove('hidden')}else sendLead.classList.add('hidden')}
 function updateQuick(){lead.viatura&&!customLeadMode?quick.classList.remove('hidden'):quick.classList.add('hidden')}
 function joinList(a){return a.length<2?(a[0]||''):a.length===2?a[0]+' e '+a[1]:a.slice(0,-1).join(', ')+' e '+a[a.length-1]}
