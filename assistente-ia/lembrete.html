@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lembrete iPhone | AutoValorPT</title>
+<style>
+:root{--b:#0b5cff;--b2:#052b73;--bg:#f3f6fb;--t:#172033;--l:#dbe3ef;--g:#18a957}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);font-family:Arial,sans-serif;color:var(--t);padding:18px;display:flex;justify-content:center;align-items:center}.card{width:100%;max-width:680px;background:#fff;border:1px solid var(--l);border-radius:22px;box-shadow:0 18px 50px #0002;overflow:hidden}.head{background:linear-gradient(135deg,var(--b),var(--b2));color:#fff;padding:24px}.tag{text-transform:uppercase;letter-spacing:.09em;font-size:13px;opacity:.85}h1{margin:8px 0 0;font-size:30px;line-height:1.1}.body{padding:20px}.lead{white-space:pre-wrap;background:#f7f9fd;border:1px solid var(--l);border-radius:16px;padding:14px;line-height:1.45;margin:12px 0 16px}.btn{display:block;width:100%;text-align:center;text-decoration:none;border:0;border-radius:14px;padding:15px 16px;font-weight:bold;font-size:17px;cursor:pointer;margin-top:10px}.green{background:var(--g);color:white}.blue{background:var(--b);color:white}.dark{background:#172033;color:white}.note{font-size:14px;color:#68758a;line-height:1.5;margin-top:14px}.small{font-size:13px;color:#68758a;line-height:1.45;margin-top:12px}</style>
+</head>
+<body>
+<div class="card">
+<div class="head"><div class="tag">AutoValorPT</div><h1>Criar lembrete no iPhone</h1></div>
+<div class="body">
+<p>Este resumo veio do assistente comercial. Pode copiar ou enviar para um Atalho do iPhone para criar um lembrete.</p>
+<div id="lead" class="lead">A carregar...</div>
+<button id="copy" class="btn blue">Copiar texto do lembrete</button>
+<a id="shortcut" class="btn green" href="#">Criar lembrete no iPhone</a>
+<a class="btn dark" href="/">Voltar ao assistente</a>
+<div class="note"><b>Nota:</b> para o botão verde funcionar, crie uma vez no iPhone um Atalho chamado <b>Nova Lead AutoValorPT</b>, configurado para receber texto e criar um lembrete com esse texto.</div>
+<div class="small">Se o atalho ainda não existir, o iPhone poderá abrir a app Atalhos. Nesse caso, copie o texto e crie o lembrete manualmente.</div>
+</div>
+</div>
+<script>
+function decodeLead(){try{const h=new URLSearchParams(location.hash.replace(/^#/,''));let v=h.get('lead')||'';v=v.replace(/-/g,'+').replace(/_/g,'/');while(v.length%4)v+='=';return decodeURIComponent(escape(atob(v)))||'Sem dados da lead.'}catch(e){return 'Sem dados da lead.'}}
+const text=decodeLead();
+document.getElementById('lead').textContent=text;
+document.getElementById('copy').onclick=async()=>{try{await navigator.clipboard.writeText(text);document.getElementById('copy').textContent='Texto copiado ✅'}catch(e){alert('Não consegui copiar automaticamente. Selecione e copie o texto.') }};
+document.getElementById('shortcut').onclick=(e)=>{e.preventDefault();const url='shortcuts://run-shortcut?name='+encodeURIComponent('Nova Lead AutoValorPT')+'&input=text&text='+encodeURIComponent(text);location.href=url};
+</script>
+</body>
+</html>
