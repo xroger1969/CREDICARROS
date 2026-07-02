@@ -12,7 +12,7 @@
 <body>
 <div class="app">
 <header>
-<div class="tag">Assistente virtual AutoValorPT</div>
+<div class="tag">AutoValorPT</div>
 <h1>Assistente virtual AutoValorPT de Carlos Vasconcelos</h1>
 <p>Posso ajudar com informações iniciais sobre viaturas em stock, financiamento, retoma e marcação de contacto.</p>
 </header>
@@ -75,7 +75,7 @@ async function send(text){if(!text.trim())return;if(awaitingSendConfirm&&typedYe
 form.onsubmit=e=>{e.preventDefault();send(input.value)};
 document.querySelectorAll('.quick button').forEach(b=>b.onclick=()=>{if(!lead.viatura){add('Primeiro escolha a viatura do stock. Escreva a marca ou modelo, por exemplo “Tesla”, “MG” ou “Renault Zoe”.','bot');input.focus();return}send(b.dataset.txt)});
 sendLead.onclick=()=>{sendLead.href=whatsAppUrl();add('Vou enviar o pedido para o Carlos.','me')};
-if(contexto.viatura){add('Viatura de interesse: '+contexto.viatura+'\nComo posso ajudar em relação a esta viatura?','bot')}else{add('Vou consultar o stock atual para lhe mostrar as viaturas disponíveis. Também pode escrever marca/modelo ou colar o link do anúncio.','bot');loadStockList()}
+if(contexto.viatura){add('Viatura de interesse: '+contexto.viatura+'\nComo posso ajudar em relação a esta viatura?','bot')}else{add('Consultei o stock atual.','bot');loadStockList()}
 updateQuick();updateSendLead();
 </script>
 </body>
