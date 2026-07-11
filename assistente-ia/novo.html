@@ -33,6 +33,21 @@
 .car-options .brand-logo-wrap{width:38px;height:38px;flex-basis:38px}
 .car-options .car-other{min-height:62px;margin-top:4px;padding:10px 14px}
 @media(max-width:560px){header{padding:16px 18px}h1{font-size:25px;line-height:1.08;margin:6px 0 8px}header p{font-size:14px;line-height:1.4}.tag{font-size:11px}.chat{height:min(58vh,520px);padding:12px}.msg{padding:11px 13px;font-size:15px}.car-card{grid-template-columns:minmax(0,1fr) 46px;min-height:64px}.car-options .car-choice{padding:8px}.car-number{width:22px;height:22px;flex-basis:22px}.car-options .brand-logo-wrap{width:36px;height:36px;flex-basis:36px}.car-options .car-title{font-size:13px}.car-options .car-details{font-size:18px}}
+/* Cor e contraste da lista de stock. */
+.car-card{position:relative;border-color:#cad9ef;background:linear-gradient(100deg,#fff 35%,#f2f7ff);box-shadow:0 5px 16px #0b5cff12}
+.car-card::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:linear-gradient(180deg,#0b5cff,#54a2ff);z-index:2}
+.car-card:nth-child(even){background:linear-gradient(100deg,#fff 35%,#f4f1ff)}
+.car-card:nth-child(even)::before{background:linear-gradient(180deg,#6448e8,#9a82ff)}
+.car-card:nth-child(3n)::before{background:linear-gradient(180deg,#008c7a,#42c7b5)}
+.car-options .car-choice{background:transparent}
+.car-number{background:var(--b);color:#fff;box-shadow:0 3px 8px #0b5cff35}
+.car-card:nth-child(even) .car-number{background:#6448e8;box-shadow:0 3px 8px #6448e835}
+.car-card:nth-child(3n) .car-number{background:#008c7a;box-shadow:0 3px 8px #008c7a35}
+.car-options .brand-logo-wrap{background:#f7faff;border-color:#cbdaf0;box-shadow:0 2px 7px #173d7a12}
+.car-options .car-details{border-left:0;background:linear-gradient(145deg,#0b5cff,#0647c8);color:#fff;text-shadow:0 1px 2px #00358480}
+.car-options .car-details:hover{background:linear-gradient(145deg,#2873ff,#0b5cff)}
+.car-options .car-other{background:linear-gradient(100deg,#f5f8ff,#eef3ff);border-color:#aebfe0;color:#12356c}
+.car-options .car-other .brand-logo-fallback{background:#dce8ff;color:#0647c8}
 </style>
 </head>
 <body>
