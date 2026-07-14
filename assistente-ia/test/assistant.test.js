@@ -372,7 +372,7 @@ test('as opções clicadas são acumuladas e as desmarcadas saem da lead', () =>
   assert.match(sandbox.leadText(), /Opções selecionadas: disponibilidade, financiamento e retoma/);
   assert.equal(buttons[1].attributes['aria-pressed'], 'true');
   sandbox.runTimers();
-  assert.match(speech.at(-1).text, /^Disponibilidade:/);
+  assert.match(speech.at(-1).text, /^Retoma:/);
   assert.doesNotMatch(speech.at(-1).text, /Opções selecionadas|Pode tocar novamente/i);
   assert.equal(speech.at(-1).options.replace, true);
 
@@ -387,10 +387,10 @@ test('os detalhes de várias opções ficam todos compilados e uma correção re
   const { sandbox, buttons } = browserFlow();
 
   buttons.forEach((button) => button.onclick());
+  sandbox.processQuick('Sexta-feira às 15 horas');
   sandbox.processQuick('Quero confirmar a disponibilidade');
   sandbox.processQuick('Entrada de 5.000 euros e prestação de 300 euros');
   sandbox.processQuick('Renault Clio de 2018 com 80.000 km');
-  sandbox.processQuick('Sexta-feira às 15 horas');
 
   const compiled = sandbox.leadText();
   assert.match(compiled, /Opções selecionadas: disponibilidade, financiamento, retoma e marcação de visita/);
@@ -415,6 +415,19 @@ test('a conversa não mostra nem lê um resumo intermédio das opções selecion
   assert.doesNotMatch(chatText, /Opções selecionadas|Pode tocar novamente/i);
   assert.doesNotMatch(speech.at(-1).text, /Opções selecionadas|Pode tocar novamente/i);
   assert.match(sandbox.leadText(), /Opções selecionadas: disponibilidade e financiamento/);
+});
+
+test('cada opção clicada atualiza a pergunta e destaca onde responder', () => {
+  const { sandbox, buttons, speech } = browserFlow();
+  const input = sandbox.document.getElementById('input');
+
+  buttons[0].onclick();
+  buttons[1].onclick();
+  sandbox.runTimers();
+
+  assert.match(speech.at(-1).text, /^Financiamento:/);
+  assert.equal(input.classList.contains('answer-needed'), true);
+  assert.match(input.placeholder, /financiamento/i);
 });
 
 test('a voz omite contagens técnicas do tipo passo 1 de 2', () => {
@@ -456,5 +469,7 @@ test('a lista inicial de stock fica bloqueada até terminar o respetivo anúncio
   assert.match(app, /detail\.state==='finished'&&detail\.text===announcement/);
   assert.match(app, /stock-locked/);
   assert.match(html, /\.stock-locked/);
+  assert.match(app, /TOQUE NO ECRÃ/);
+  assert.match(html, /stock-gate-title/);
   assert.match(voice, /emitSpeechState\('finished', text\)/);
 });
