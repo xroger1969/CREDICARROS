@@ -16,8 +16,10 @@
   let playing = false;
   let queue = [];
   window.assistantVoiceState = 'checking';
+  window.lastAssistantSpeech = '';
 
   function emitSpeechState(state, text = '') {
+    if (state === 'finished') window.lastAssistantSpeech = text;
     window.dispatchEvent(new CustomEvent('assistant-speech-state', { detail: { state, text } }));
   }
 
