@@ -414,3 +414,13 @@ test('a voz omite contagens técnicas do tipo passo 1 de 2', () => {
   assert.equal(cleanForSpeech('1/2 — Retoma: Qual é a viatura?'), 'Retoma: Qual é a viatura?');
   assert.equal(cleanForSpeech('Passo 1 de 2. Financiamento: qual é a entrada?'), 'Financiamento: qual é a entrada?');
 });
+
+test('o controlo da voz fica no topo e o assistente inicia com a voz ligada', () => {
+  const html = readFileSync(new URL('../novo.html', import.meta.url), 'utf8');
+  const voice = readFileSync(new URL('../voice-client.js', import.meta.url), 'utf8');
+
+  assert.ok(html.indexOf('id="voiceToggle"') < html.indexOf('id="chat"'));
+  assert.match(html, /id="voiceToggle"[^>]+aria-pressed="true"/);
+  assert.match(voice, /let enabled = true;/);
+  assert.match(voice, /O som começa no primeiro toque/);
+});
