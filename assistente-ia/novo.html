@@ -51,10 +51,10 @@
 /* A lista só fica disponível depois da apresentação de voz do stock. */
 .car-options.stock-locked{position:relative;min-height:190px;overflow:hidden;border-radius:18px}
 .stock-locked>.car-card,.stock-locked>.car-other{pointer-events:none;opacity:.35;filter:saturate(.55) blur(1px);user-select:none}
-.car-options .stock-gate{position:absolute;inset:0;z-index:8;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;margin:0;padding:22px;border:1px solid #9eb9e6;border-radius:18px;background:#f4f8fff0;color:#1748b8;text-align:center;box-shadow:inset 0 0 30px #dceaff;cursor:pointer}
-.stock-gate-icon{font-size:30px;line-height:1}
-.stock-gate strong{font-size:15px}
-.stock-gate small{max-width:280px;color:#61728c;font-size:11px;line-height:1.35}
+.car-options .stock-gate{position:absolute;inset:0;z-index:8;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;margin:0;padding:24px;border:2px solid #fff;border-radius:18px;background:linear-gradient(145deg,#0b5cff,#1748b8);color:#fff;text-align:center;box-shadow:inset 0 0 35px #021f6b55,0 8px 24px #0b5cff35;cursor:pointer}
+.stock-gate-icon{font-size:38px;line-height:1;filter:drop-shadow(0 3px 5px #021f6b80)}
+.stock-gate-title{display:block;padding:9px 17px;border-radius:999px;background:#fff;color:#0b5cff;font-size:clamp(21px,5vw,30px);font-weight:900;letter-spacing:.025em;line-height:1;box-shadow:0 7px 18px #021f6b55}
+.stock-gate small{max-width:310px;color:#eaf2ff;font-size:13px;line-height:1.4;font-weight:700}
 /* Experiência mais humana e guiada, sem alterar o funcionamento do assistente. */
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:radial-gradient(circle at 15% 10%,#dceaff 0,transparent 28%),radial-gradient(circle at 90% 90%,#dff8ee 0,transparent 25%),#f3f6fb}
 .friendly-header{position:relative;overflow:hidden;background:linear-gradient(135deg,#075dea 0%,#1748b8 58%,#493bb8 100%);padding:20px 22px 16px}
@@ -87,6 +87,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;ba
 .quick button:hover{transform:translateY(-1px);border-color:#0b5cff;color:#0b5cff}
 .row input{background:#f8faff;border-color:#ccd9ec;box-shadow:inset 0 1px 2px #173d7a08}
 .row input:focus{outline:3px solid #0b5cff22;border-color:#0b5cff;background:#fff}
+.row input.answer-needed{border-color:#0b5cff;background:#fff;box-shadow:0 0 0 4px #0b5cff20,inset 0 1px 2px #173d7a08}
 .row button{box-shadow:0 7px 16px #0b5cff25;cursor:pointer}
 @media(max-width:560px){.friendly-header{padding:14px 14px 12px}.welcome-bar{margin-bottom:7px}.welcome-main{grid-template-columns:82px minmax(0,1fr);gap:11px}.assistant-figure{width:82px;height:82px;border-radius:24px}.assistant-figure svg{width:78px;height:78px}.hello-pill{font-size:10px;padding:4px 8px}.friendly-header h1{font-size:21px;margin:6px 0 4px}.friendly-header p{font-size:12px;line-height:1.35}.guide-steps{margin-top:10px;gap:5px}.guide-step{justify-content:center;padding:6px 4px;font-size:9px;gap:4px}.guide-step span{width:18px;height:18px;flex-basis:18px;font-size:9px}.chat{height:min(57vh,510px)}.msg.bot{margin-left:31px}.msg.bot::before{left:-34px;width:27px;height:27px;font-size:14px}}
 /* As opções fazem parte da conversa e a interface adapta-se ao teclado móvel. */
