@@ -228,6 +228,7 @@ function browserFlow() {
       style: {},
       scrollTop: 0,
       disabled: false,
+      focused: false,
       value: '',
       href: '',
       classList: {
@@ -257,7 +258,7 @@ function browserFlow() {
         this.attributes[name] = String(value);
       },
       addEventListener() {},
-      focus() {},
+      focus() { this.focused = true; },
       click() {}
     };
     Object.defineProperties(el, {
@@ -428,6 +429,7 @@ test('cada opção clicada atualiza a pergunta e destaca onde responder', () => 
   assert.match(speech.at(-1).text, /^Financiamento:/);
   assert.equal(input.classList.contains('answer-needed'), true);
   assert.match(input.placeholder, /financiamento/i);
+  assert.equal(input.focused, true);
 });
 
 test('a voz omite contagens técnicas do tipo passo 1 de 2', () => {
