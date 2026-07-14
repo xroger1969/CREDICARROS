@@ -1,156 +1,162 @@
 (() => {
-  const sdk = window.ElevenLabsClient;
+  const voiceToggle = document.getElementById('voiceToggle');
+  if (!voiceToggle) return;
+
+  const icon = voiceToggle.querySelector('.voice-icon');
   const label = voiceToggle.querySelector('.voice-label');
   const status = voiceToggle.querySelector('.voice-status');
   const privacy = document.getElementById('voicePrivacy');
-  let conversation = null;
-  let connecting = false;
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  let audioContext = null;
+  let source = null;
+  let requestController = null;
+  let enabled = false;
   let configured = false;
-  let errorShown = false;
+  let playing = false;
+  let queue = [];
 
-  function setButton(state, main, detail) {
-    voiceToggle.classList.remove('ready', 'connecting', 'on', 'speaking');
+  function setButton(state, main, detail, symbol) {
+    voiceToggle.classList.remove('ready', 'loading', 'on', 'speaking');
     if (state) voiceToggle.classList.add(state);
-    voiceToggle.setAttribute('aria-pressed', state === 'on' || state === 'speaking' ? 'true' : 'false');
+    voiceToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+    icon.textContent = symbol;
     label.textContent = main;
     status.textContent = detail;
   }
 
-  function showError(message) {
-    if (!errorShown) {
-      add(message, 'bot');
-      errorShown = true;
-    }
-  }
-
-  function firstMessage() {
-    const vehicle = String(lead.viatura || '')
-      .replace(/[<>]/g, '')
+  function cleanForSpeech(value) {
+    return String(value || '')
+      .replace(/https?:\/\/\S+/gi, 'link do anúncio')
+      .replace(/[✅💳🔄📅🚗🚙👋🎙️🔊🔇]/gu, '')
+      .replace(/\b(\d+)\/(\d+)\s*[—-]\s*/g, 'Passo $1 de $2. ')
       .replace(/\s+/g, ' ')
       .trim()
-      .slice(0, 180);
-    return `Olá! Eu sou o assistente do Carlos. Vou fazer-te algumas perguntas rápidas para perceber o que precisas e ajudar o Carlos a responder mais depressa. Estamos a falar da viatura: ${vehicle}. Por onde queres começar?`;
+      .slice(0, 900);
   }
 
-  async function getConversationToken() {
-    const response = await fetch('/api/voice-token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: '{}'
+  function stopPlayback() {
+    requestController?.abort();
+    requestController = null;
+    if (source) {
+      try { source.stop(); } catch {}
+      source.disconnect();
+      source = null;
+    }
+    playing = false;
+  }
+
+  async function playAudio(buffer) {
+    if (!audioContext) throw new Error('Áudio não suportado neste navegador.');
+    const decoded = await audioContext.decodeAudioData(buffer.slice(0));
+    await new Promise((resolve, reject) => {
+      source = audioContext.createBufferSource();
+      source.buffer = decoded;
+      source.connect(audioContext.destination);
+      source.onended = resolve;
+      try {
+        source.start(0);
+      } catch (error) {
+        reject(error);
+      }
     });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok || !data.token) {
-      throw new Error(data.error || 'Não foi possível iniciar a conversa de voz.');
-    }
-    return data.token;
+    source?.disconnect();
+    source = null;
   }
 
-  async function startConversation() {
-    if (connecting || conversation) return;
-    if (!configured || !sdk?.Conversation) {
-      showError('A conversa de voz ainda não está disponível. Pode continuar a usar o chat escrito normalmente.');
-      return;
-    }
-    if (!filled(lead.viatura)) {
-      add('Escolha primeiro uma viatura. Depois toque em “Falar com o assistente”.', 'bot');
-      chat.scrollTop = chat.scrollHeight;
-      return;
-    }
+  async function playQueue() {
+    if (playing || !enabled || !configured || !queue.length) return;
+    playing = true;
+    let failed = false;
 
-    connecting = true;
-    errorShown = false;
-    voiceToggle.disabled = true;
-    setButton('connecting', 'A ligar…', 'Autorize o microfone se for solicitado');
+    while (enabled && queue.length) {
+      const text = queue.shift();
+      requestController = new AbortController();
+      setButton('speaking', 'Voz ligada', 'O assistente está a falar…', '🔊');
 
-    try {
-      const permission = await navigator.mediaDevices.getUserMedia({ audio: true });
-      permission.getTracks().forEach((track) => track.stop());
-      const conversationToken = await getConversationToken();
-
-      conversation = await sdk.Conversation.startSession({
-        conversationToken,
-        connectionType: 'webrtc',
-        overrides: {
-          agent: { firstMessage: firstMessage() }
-        },
-        onConnect: () => {
-          connecting = false;
-          voiceToggle.disabled = false;
-          setButton('on', 'Terminar conversa', 'A ouvir… fale naturalmente');
-        },
-        onMessage: ({ message, role, event_id: eventId }) => {
-          recordVoiceMessage(role, message, eventId);
-        },
-        onModeChange: ({ mode }) => {
-          if (!conversation) return;
-          if (mode === 'speaking') {
-            setButton('speaking', 'Terminar conversa', 'O assistente está a responder…');
-          } else {
-            setButton('on', 'Terminar conversa', 'A ouvir… fale naturalmente');
-          }
-        },
-        onDisconnect: () => {
-          conversation = null;
-          connecting = false;
-          voiceToggle.disabled = false;
-          setButton('ready', 'Falar novamente', 'Conversa terminada');
-          updateSend();
-        },
-        onError: () => {
-          showError('A conversa de voz foi interrompida. Pode tentar novamente ou continuar por escrito.');
+      try {
+        const response = await fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+          signal: requestController.signal
+        });
+        if (!response.ok) throw new Error('Não foi possível gerar a voz.');
+        const buffer = await response.arrayBuffer();
+        if (!enabled || requestController.signal.aborted) break;
+        await playAudio(buffer);
+      } catch (error) {
+        if (error?.name !== 'AbortError' && enabled) {
+          failed = true;
+          queue = [];
+          setButton('on', 'Voz ligada', 'Não foi possível ler esta resposta', '🔊');
         }
-      });
-    } catch (error) {
-      conversation = null;
-      connecting = false;
-      voiceToggle.disabled = false;
-      setButton('ready', 'Tentar novamente', 'Não foi possível ligar o microfone');
-      const denied = error?.name === 'NotAllowedError' || error?.name === 'PermissionDeniedError';
-      showError(denied
-        ? 'Para conversar por voz, permita o acesso ao microfone nas definições do navegador.'
-        : 'Não foi possível iniciar a voz. O chat escrito continua disponível.');
+      } finally {
+        requestController = null;
+      }
     }
+
+    playing = false;
+    if (enabled && !failed) setButton('on', 'Voz ligada', 'As respostas serão lidas pela ElevenLabs', '🔊');
   }
 
-  async function stopConversation() {
-    if (!conversation) return;
-    const current = conversation;
-    conversation = null;
-    voiceToggle.disabled = true;
-    setButton('connecting', 'A terminar…', 'A guardar o resumo da conversa');
+  window.queueAssistantSpeech = (value) => {
+    if (!enabled || !configured) return;
+    const text = cleanForSpeech(value);
+    if (!text || /^A analisar/i.test(text)) return;
+    queue.push(text);
+    void playQueue();
+  };
+
+  function latestAssistantMessage() {
+    const latest = document.querySelector('.msg.bot.latest');
+    return latest?.textContent || '';
+  }
+
+  voiceToggle.addEventListener('click', async () => {
+    if (!configured) return;
+
+    if (enabled) {
+      enabled = false;
+      queue = [];
+      stopPlayback();
+      setButton('ready', 'Voz desligada', 'Toque para ouvir as respostas', '🔇');
+      return;
+    }
+
     try {
-      await current.endSession();
-    } finally {
-      connecting = false;
-      voiceToggle.disabled = false;
-      setButton('ready', 'Falar novamente', 'Pode enviar o resumo ao Carlos');
-      updateSend();
+      if (!AudioContextClass) throw new Error('Áudio não suportado.');
+      if (!audioContext) audioContext = new AudioContextClass();
+      await audioContext.resume();
+      enabled = true;
+      setButton('on', 'Voz ligada', 'As respostas serão lidas pela ElevenLabs', '🔊');
+      window.queueAssistantSpeech(latestAssistantMessage());
+    } catch {
+      enabled = false;
+      setButton('', 'Voz indisponível', 'O chat escrito continua disponível', '🔇');
     }
-  }
-
-  voiceToggle.addEventListener('click', () => {
-    if (conversation) stopConversation();
-    else startConversation();
   });
 
   window.addEventListener('pagehide', () => {
-    if (conversation) conversation.endSession().catch(() => {});
+    enabled = false;
+    queue = [];
+    stopPlayback();
+    audioContext?.close().catch(() => {});
   });
 
-  fetch('/api/voice-token', { cache: 'no-store' })
+  fetch('/api/tts', { cache: 'no-store' })
     .then((response) => response.json())
     .then((data) => {
-      configured = Boolean(data.configured && sdk?.Conversation);
+      configured = Boolean(data.configured);
       voiceToggle.disabled = !configured;
       privacy.classList.toggle('hidden', !configured);
       if (configured) {
-        setButton('ready', 'Falar com o assistente', 'Conversa natural com voz ElevenLabs');
+        setButton('ready', 'Voz desligada', 'Toque para ouvir as respostas', '🔇');
       } else {
-        setButton('', 'Voz em preparação', 'O chat escrito continua disponível');
+        setButton('', 'Voz em preparação', 'O chat escrito continua disponível', '🔇');
       }
     })
     .catch(() => {
       voiceToggle.disabled = true;
-      setButton('', 'Voz indisponível', 'O chat escrito continua disponível');
+      setButton('', 'Voz indisponível', 'O chat escrito continua disponível', '🔇');
     });
 })();
