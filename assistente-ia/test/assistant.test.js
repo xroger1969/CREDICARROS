@@ -342,10 +342,11 @@ test('os detalhes de várias opções ficam todos compilados e uma correção re
   sandbox.processQuick('Sexta-feira às 15 horas');
 
   const compiled = sandbox.leadText();
-  assert.match(compiled, /Opções selecionadas: disponibilidade, financiamento, retoma e marcação de visita\/test-drive/);
+  assert.match(compiled, /Opções selecionadas: disponibilidade, financiamento, retoma e marcação de visita/);
   assert.match(compiled, /Entrada\/Prestação: .*5\.000 euros/);
   assert.match(compiled, /Retoma: Renault Clio de 2018/);
   assert.match(compiled, /Horário\/Visita: .*Sexta-feira às 15 horas/);
+  assert.doesNotMatch(compiled, /test-drive/i);
 
   buttons[2].onclick();
   assert.doesNotMatch(sandbox.leadText(), /Renault Clio/);
