@@ -312,14 +312,17 @@ function browserFlow() {
     quick.appendChild(button);
     return button;
   });
-  const ids = { chat, form, input, sendLead };
+  const quickContinue = createElement('button', 'Continuar com as opções →');
+  quickContinue.className = 'quick-continue hidden';
+  quick.appendChild(quickContinue);
+  const ids = { chat, form, input, sendLead, quickContinue };
   const document = {
     body: createElement('body'),
     documentElement: { style: { setProperty() {} } },
     getElementById: (id) => ids[id],
     querySelector: (selector) => selector === '.quick' ? quick : null,
     querySelectorAll(selector) {
-      if (selector === '.quick button') return buttons;
+      if (selector === '.quick button[data-key]') return buttons;
       if (selector === '.bot.latest') return chat.children.filter((item) => item.classList?.contains('bot') && item.classList.contains('latest'));
       return [];
     },
@@ -360,11 +363,12 @@ function browserFlow() {
 
   const source = readFileSync(new URL('../app.js', import.meta.url), 'utf8');
   vm.runInNewContext(source, sandbox);
-  return { sandbox, buttons, speech };
+  return { sandbox, buttons, quickContinue, speech };
 }
 
 test('as opções clicadas são acumuladas e as desmarcadas saem da lead', () => {
-  const { sandbox, buttons, speech } = browserFlow();
+  const { sandbox, buttons, quickContinue, speech } = browserFlow();
+  const speechBefore = speech.length;
 
   buttons[0].onclick();
   buttons[1].onclick();
@@ -372,64 +376,75 @@ test('as opções clicadas são acumuladas e as desmarcadas saem da lead', () =>
 
   assert.match(sandbox.leadText(), /Opções selecionadas: disponibilidade, financiamento e retoma/);
   assert.equal(buttons[1].attributes['aria-pressed'], 'true');
-  sandbox.runTimers();
-  assert.match(speech.at(-1).text, /^Retoma:/);
-  assert.doesNotMatch(speech.at(-1).text, /Opções selecionadas|Pode tocar novamente/i);
-  assert.equal(speech.at(-1).options.replace, true);
+  assert.equal(speech.length, speechBefore);
+  assert.equal(quickContinue.classList.contains('hidden'), false);
+  assert.match(quickContinue.textContent, /3 opções/);
 
   buttons[1].onclick();
 
   assert.match(sandbox.leadText(), /disponibilidade e retoma/);
   assert.doesNotMatch(sandbox.leadText(), /financiamento/i);
   assert.equal(buttons[1].attributes['aria-pressed'], 'false');
+  assert.match(quickContinue.textContent, /2 opções/);
 });
 
-test('os detalhes de várias opções ficam todos compilados e uma correção remove os respetivos dados', () => {
-  const { sandbox, buttons } = browserFlow();
+test('todas as opções confirmadas são pedidas e compiladas numa única mensagem', () => {
+  const { sandbox, buttons, quickContinue, speech } = browserFlow();
 
   buttons.forEach((button) => button.onclick());
-  sandbox.processQuick('Sexta-feira às 15 horas');
-  sandbox.processQuick('Quero confirmar a disponibilidade');
-  sandbox.processQuick('Entrada de 5.000 euros e prestação de 300 euros');
-  sandbox.processQuick('Renault Clio de 2018 com 80.000 km');
+  quickContinue.onclick();
+
+  const question = speech.at(-1).text;
+  assert.match(question, /Disponibilidade:/);
+  assert.match(question, /Financiamento:/);
+  assert.match(question, /Retoma:/);
+  assert.match(question, /Marcar visita:/);
+  assert.match(question, /Contacto:/);
+
+  sandbox.processQuick('Disponibilidade: confirmar. Financiamento: entrada de 5.000 euros e prestação de 300 euros. Retoma: Renault Clio de 2018 com 80.000 km. Visita: sexta-feira às 15 horas.\nNome: Marta Rodrigues\nContacto: 939 809 409');
 
   const compiled = sandbox.leadText();
   assert.match(compiled, /Opções selecionadas: disponibilidade, financiamento, retoma e marcação de visita/);
-  assert.match(compiled, /Entrada\/Prestação: .*5\.000 euros/);
-  assert.match(compiled, /Retoma: Renault Clio de 2018/);
-  assert.match(compiled, /Horário\/Visita: .*Sexta-feira às 15 horas/);
+  assert.match(compiled, /Resposta conjunta.*5\.000 euros/);
+  assert.match(compiled, /Renault Clio de 2018/);
+  assert.match(compiled, /sexta-feira às 15 horas/i);
+  assert.match(compiled, /Cliente: Marta Rodrigues/);
+  assert.match(compiled, /Contacto: 939809409/);
   assert.doesNotMatch(compiled, /test-drive/i);
-
-  buttons[2].onclick();
-  assert.doesNotMatch(sandbox.leadText(), /Renault Clio/);
-  assert.doesNotMatch(sandbox.leadText(), /retoma/i);
 });
 
-test('a conversa não mostra nem lê um resumo intermédio das opções selecionadas', () => {
+test('a conversa espera pela confirmação sem mostrar nem ler um resumo intermédio', () => {
   const { sandbox, buttons, speech } = browserFlow();
+  const speechBefore = speech.length;
 
   buttons[0].onclick();
   buttons[1].onclick();
-  sandbox.runTimers();
 
   const chatText = sandbox.document.getElementById('chat').children.map((item) => item.textContent).join(' ');
   assert.doesNotMatch(chatText, /Opções selecionadas|Pode tocar novamente/i);
-  assert.doesNotMatch(speech.at(-1).text, /Opções selecionadas|Pode tocar novamente/i);
+  assert.equal(speech.length, speechBefore);
   assert.match(sandbox.leadText(), /Opções selecionadas: disponibilidade e financiamento/);
 });
 
-test('cada opção clicada atualiza a pergunta e destaca onde responder', () => {
-  const { sandbox, buttons, speech } = browserFlow();
+test('o botão Continuar faz uma pergunta única e só então destaca a resposta', () => {
+  const { sandbox, buttons, quickContinue, speech } = browserFlow();
   const input = sandbox.document.getElementById('input');
 
   buttons[0].onclick();
   buttons[1].onclick();
-  sandbox.runTimers();
 
-  assert.match(speech.at(-1).text, /^Financiamento:/);
+  assert.equal(input.classList.contains('answer-needed'), false);
+  assert.equal(input.focused, false);
+  assert.equal(quickContinue.classList.contains('hidden'), false);
+
+  quickContinue.onclick();
+
+  assert.match(speech.at(-1).text, /Disponibilidade:[\s\S]*Financiamento:[\s\S]*Contacto:/);
   assert.equal(input.classList.contains('answer-needed'), true);
-  assert.match(input.placeholder, /financiamento/i);
+  assert.match(input.placeholder, /resposta e contacto/i);
   assert.equal(input.focused, true);
+  assert.equal(quickContinue.classList.contains('hidden'), true);
+  assert.equal(buttons.every((button) => button.disabled), true);
 });
 
 test('a voz omite contagens técnicas do tipo passo 1 de 2', () => {
