@@ -413,6 +413,22 @@ test('todas as opções confirmadas são pedidas e compiladas numa única mensag
   assert.doesNotMatch(compiled, /test-drive/i);
 });
 
+test('o nome e contacto escritos naturalmente não voltam a ser pedidos', () => {
+  const { sandbox, buttons, quickContinue } = browserFlow();
+
+  buttons[1].onclick();
+  buttons[2].onclick();
+  quickContinue.onclick();
+  sandbox.processQuick('2000€ entrada 300€ por mês Renault Megane 2023 234000kms Júlia 91855665');
+
+  const compiled = sandbox.leadText();
+  const chatText = sandbox.document.getElementById('chat').children.map((item) => item.textContent).join(' ');
+  assert.match(compiled, /Cliente: Júlia/);
+  assert.match(compiled, /Contacto: 91855665/);
+  assert.match(chatText, /Já tenho todos os dados essenciais/i);
+  assert.doesNotMatch(chatText, /Falta apenas indicar o seu nome e contacto/i);
+});
+
 test('a conversa espera pela confirmação sem mostrar nem ler um resumo intermédio', () => {
   const { sandbox, buttons, speech } = browserFlow();
   const speechBefore = speech.length;
