@@ -15,6 +15,16 @@
   let unlocked = false;
   let playing = false;
   let queue = [];
+  window.assistantVoiceState = 'checking';
+
+  function emitSpeechState(state, text = '') {
+    window.dispatchEvent(new CustomEvent('assistant-speech-state', { detail: { state, text } }));
+  }
+
+  function setVoiceState(state) {
+    window.assistantVoiceState = state;
+    emitSpeechState(state);
+  }
 
   function setButton(state, main, detail, symbol) {
     voiceToggle.classList.remove('ready', 'loading', 'on', 'speaking');
@@ -92,9 +102,11 @@
         const buffer = await response.arrayBuffer();
         if (!enabled || requestController.signal.aborted) break;
         await playAudio(buffer);
+        emitSpeechState('finished', text);
       } catch (error) {
         if (error?.name !== 'AbortError' && enabled) {
           failed = true;
+          emitSpeechState('failed', text);
           queue = [];
           setButton('on', 'Voz ligada', 'Não foi possível ler esta resposta', '🔊');
         }
@@ -172,6 +184,7 @@
       enabled = false;
       queue = [];
       stopPlayback();
+      setVoiceState('off');
       setButton('ready', 'Voz desligada', 'Toque para ouvir as respostas', '🔇');
       return;
     }
@@ -179,10 +192,12 @@
     try {
       enabled = true;
       if (!await unlockAudio()) throw new Error('Áudio bloqueado.');
+      setVoiceState('ready');
       setButton('on', 'Voz ligada', 'As respostas serão lidas pela ElevenLabs', '🔊');
       window.queueAssistantSpeech(latestAssistantMessage());
     } catch {
       enabled = false;
+      setVoiceState('unavailable');
       setButton('', 'Voz indisponível', 'O chat escrito continua disponível', '🔇');
     }
   });
@@ -202,17 +217,20 @@
       voiceToggle.disabled = !configured;
       privacy.classList.toggle('hidden', !configured);
       if (configured) {
+        setVoiceState('ready');
         setButton('on', 'Voz ligada', unlocked ? 'As respostas serão lidas pela ElevenLabs' : 'O som começa no primeiro toque', '🔊');
         void unlockAudio().catch(() => {});
       } else {
         enabled = false;
         queue = [];
+        setVoiceState('unavailable');
         setButton('', 'Voz em preparação', 'O chat escrito continua disponível', '🔇');
       }
     })
     .catch(() => {
       enabled = false;
       queue = [];
+      setVoiceState('unavailable');
       voiceToggle.disabled = true;
       setButton('', 'Voz indisponível', 'O chat escrito continua disponível', '🔇');
     });
