@@ -229,6 +229,70 @@ function safeCommercialReply(reason = '') {
   };
 }
 
+function extractPhone(value) {
+  const match = String(value || '').match(/(?:\+?351\s*)?9\d{2}[\s.\-]*\d{3}[\s.\-]*\d{3}/);
+  return match ? match[0].replace(/\D/g, '').replace(/^351/, '') : '';
+}
+
+function extractNameWithContact(value, currentLead, phone) {
+  if (currentLead?.nome) return currentLead.nome;
+  if (!phone && !currentLead?.telefone) return '';
+  const withoutPhone = String(value || '')
+    .replace(/(?:\+?351\s*)?9\d{2}[\s.\-]*\d{3}[\s.\-]*\d{3}/, ' ')
+    .replace(/^(sou|chamo-me|o meu nome [ée]|nome)\s*[:,-]?\s*/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!/^[\p{L}][\p{L}' -]{1,79}$/u.test(withoutPhone)) return '';
+  if (withoutPhone.split(/\s+/).length > 5) return '';
+  return limitText(withoutPhone, 80);
+}
+
+function unavailableFallback(body = {}, reason = 'assistente_temporariamente_indisponivel') {
+  const message = sanitizeMessage(body.message || '', 1200);
+  const vehicle = limitText(body.contexto?.viatura || body.lead?.viatura || '', 180);
+  const lead = mergeLead({ viatura: vehicle }, body.lead || {});
+  const phone = extractPhone(message);
+  const name = extractNameWithContact(message, lead, phone);
+  if (phone) lead.telefone = phone;
+  if (name) lead.nome = name;
+
+  const normalized = normalizeText(message);
+  const looksLikeQuestion = /\?|\b(qual|como|quanto|quando|onde|porque|estado|informacao|saber)\b/i.test(normalized);
+  if (message && looksLikeQuestion) {
+    const note = `Pergunta do cliente: ${limitText(message, 220)}`;
+    lead.observacoes = limitText([lead.observacoes, note].filter(Boolean).join('; '), 280);
+  }
+
+  const missing = [];
+  if (!lead.nome) missing.push('nome');
+  if (!lead.telefone) missing.push('telefone');
+  let reply;
+  if (lead.nome && lead.telefone) {
+    reply = `Obrigado, ${lead.nome}. A sua pergunta ficou registada para o Carlos confirmar e responder-lhe diretamente.`;
+  } else if (lead.telefone) {
+    reply = 'Obrigado. Indique por favor o seu nome para o Carlos poder responder à sua pergunta.';
+  } else if (lead.nome) {
+    reply = `Obrigado, ${lead.nome}. Indique por favor o seu contacto/WhatsApp para o Carlos poder responder.`;
+  } else if (/\b(bateria|autonomia|degradacao|saude da bateria)\b/i.test(normalized)) {
+    reply = 'O estado da bateria desta viatura precisa de ser confirmado através do diagnóstico ou relatório disponível. Indique o seu nome e contacto/WhatsApp para o Carlos verificar e responder-lhe.';
+  } else {
+    reply = 'Não consigo confirmar essa informação automaticamente neste momento, mas a sua pergunta ficou registada. Indique o seu nome e contacto/WhatsApp para o Carlos responder diretamente.';
+  }
+
+  return {
+    reply,
+    lead,
+    estado: {
+      fora_do_tema: false,
+      precisa_humano: true,
+      interesse_real: true,
+      campos_em_falta: missing,
+      motivo: reason
+    },
+    alertas: ['Resposta de segurança usada porque o serviço de IA não respondeu.']
+  };
+}
+
 function replyHasRiskyConfirmation(reply) {
   const text = reply.toLowerCase();
   const saysHumanWillConfirm = /(confirmar|confirmado pelo gestor|carece|validar|verificar)/i.test(text);
@@ -286,7 +350,7 @@ class AssistantRequestError extends Error {
  * Mantém num único ponto as mesmas regras, validações e recolha da lead.
  */
 export async function runAssistant(body = {}, options = {}) {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = String(process.env.OPENAI_API_KEY || '').trim();
   if (!apiKey) {
     throw new AssistantRequestError('Falta configurar OPENAI_API_KEY na Vercel.', 500);
   }
@@ -384,7 +448,11 @@ export default async function handler(req, res) {
     res.status(200).json(safe);
   } catch (err) {
     const status = err instanceof AssistantRequestError ? err.status : 500;
-    const error = err instanceof AssistantRequestError ? err.message : 'Erro inesperado no assistente.';
-    res.status(status).json({ error });
+    if (status === 401 || status === 403 || status === 408 || status === 429 || status >= 500) {
+      console.error('Serviço de IA indisponível.', { status });
+      res.status(200).json(unavailableFallback(req.body || {}));
+      return;
+    }
+    res.status(status).json({ error: 'Não foi possível processar a mensagem.' });
   }
 }

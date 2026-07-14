@@ -73,6 +73,58 @@ test('o endpoint escrito mantém o contrato POST', async () => {
   assert.equal(res.body.error, 'Use POST.');
 });
 
+test('uma chave OpenAI inválida nunca é mostrada ao cliente e a pergunta fica registada', async () => {
+  const previousKey = process.env.OPENAI_API_KEY;
+  const previousFetch = globalThis.fetch;
+  const previousError = console.error;
+  process.env.OPENAI_API_KEY = 'sk-chave-invalida';
+  globalThis.fetch = async () => ({
+    ok: false,
+    status: 401,
+    async json() {
+      return { error: { message: 'Incorrect API key provided: sk-segredo' } };
+    }
+  });
+  console.error = () => {};
+
+  try {
+    const first = responseRecorder();
+    await chatHandler({
+      method: 'POST',
+      body: {
+        message: 'Qual é o estado da bateria?',
+        contexto: { viatura: 'BYD Atto 3 Ver Design' },
+        lead: { viatura: 'BYD Atto 3 Ver Design' }
+      }
+    }, first);
+
+    assert.equal(first.statusCode, 200);
+    assert.match(first.body.reply, /estado da bateria.*confirmado/i);
+    assert.match(first.body.lead.observacoes, /Qual é o estado da bateria/);
+    assert.doesNotMatch(JSON.stringify(first.body), /Incorrect API key|sk-segredo/i);
+
+    const second = responseRecorder();
+    await chatHandler({
+      method: 'POST',
+      body: {
+        message: 'Marta Rodrigues 939 809 409',
+        contexto: { viatura: 'BYD Atto 3 Ver Design' },
+        lead: first.body.lead
+      }
+    }, second);
+
+    assert.equal(second.statusCode, 200);
+    assert.equal(second.body.lead.nome, 'Marta Rodrigues');
+    assert.equal(second.body.lead.telefone, '939809409');
+    assert.match(second.body.reply, /pergunta ficou registada/i);
+  } finally {
+    globalThis.fetch = previousFetch;
+    console.error = previousError;
+    if (previousKey) process.env.OPENAI_API_KEY = previousKey;
+    else delete process.env.OPENAI_API_KEY;
+  }
+});
+
 test('o estado da leitura de voz não revela credenciais', async () => {
   const previous = process.env.ELEVENLABS_API_KEY;
   delete process.env.ELEVENLABS_API_KEY;
