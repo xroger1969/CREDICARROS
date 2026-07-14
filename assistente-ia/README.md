@@ -17,6 +17,47 @@ OPENAI_MODEL=gpt-5.5
 
 6. Fazer Deploy.
 
+## Conversa de voz ElevenLabs
+
+A voz usa o **Speech Engine** da ElevenLabs. O chat escrito e a voz chamam o mesmo núcleo comercial (`runAssistant`), por isso mantêm as mesmas regras, contexto da viatura e validações. A transcrição da conversa aparece no chat e pode seguir no resumo enviado ao Carlos pelo WhatsApp.
+
+### Variáveis privadas na Vercel
+
+Adicionar em **Settings → Environment Variables**:
+
+```text
+ELEVENLABS_API_KEY=chave_privada_guardada_apenas_na_vercel
+ELEVENLABS_SPEECH_ENGINE_ID=seng_...
+```
+
+A primeira variável é secreta. Nunca deve ser colocada no HTML, no JavaScript do navegador, no GitHub ou enviada por mensagem.
+
+### Criar o Speech Engine uma vez
+
+1. Publicar primeiro o endpoint WebSocket deste projeto.
+2. Num ambiente local seguro, definir `ELEVENLABS_API_KEY` sem a guardar no repositório.
+3. Na pasta `assistente-ia`, executar:
+
+```text
+npm install
+npm run voice:create
+```
+
+O comando usa por defeito:
+
+```text
+wss://credicarros.vercel.app/api/voice-ws
+```
+
+Para outro domínio, definir `PUBLIC_WS_URL` antes do comando. Para escolher uma voz específica, pode também ser definida `ELEVENLABS_VOICE_ID`.
+
+4. Copiar apenas o valor `seng_...` apresentado pelo comando para `ELEVENLABS_SPEECH_ENGINE_ID` na Vercel.
+5. Fazer novo deploy e confirmar que o botão mostra **Falar com o assistente**.
+
+O projeto da Vercel deve ter **Fluid Compute** ativo para aceitar WebSockets. A conversa escrita continua a funcionar normalmente quando a voz ainda não está configurada ou quando o utilizador não autoriza o microfone.
+
+A configuração criada pelo comando limita cada conversa a quatro minutos, não grava a voz e pede à ElevenLabs para eliminar áudio, transcrição e dados pessoais após o período mínimo configurado de um dia.
+
 ## Uso recomendado
 
 Depois do deploy, usa primeiro o gerador de links:
@@ -51,6 +92,8 @@ https://o-teu-projeto.vercel.app/?origem=standvirtual&viatura=Renault%20Zoe%20Li
 ## Segurança da chave
 
 A chave da OpenAI nunca fica no HTML. Ela fica guardada nas variáveis de ambiente da Vercel e é usada apenas pelo endpoint seguro `/api/chat`.
+
+A chave da ElevenLabs também fica apenas no servidor. O navegador recebe um token temporário através de `/api/voice-token`; o endpoint valida a origem, limita tentativas e nunca devolve a chave privada.
 
 ## Dados permitidos
 

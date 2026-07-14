@@ -273,101 +273,114 @@ function validateModelPayload(raw, previousLead, message = '') {
   return { reply, lead, estado, alertas };
 }
 
+class AssistantRequestError extends Error {
+  constructor(message, status = 500) {
+    super(message);
+    this.name = 'AssistantRequestError';
+    this.status = status;
+  }
+}
+
+/**
+ * Núcleo comercial partilhado pelo chat escrito e pela conversa de voz.
+ * Mantém num único ponto as mesmas regras, validações e recolha da lead.
+ */
+export async function runAssistant(body = {}, options = {}) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new AssistantRequestError('Falta configurar OPENAI_API_KEY na Vercel.', 500);
+  }
+
+  const message = sanitizeMessage(body.message || '', 1200);
+  const history = Array.isArray(body.history) ? body.history.slice(-8) : [];
+  const contexto = {
+    origem: limitText(body.contexto?.origem || 'standvirtual', 60),
+    viatura: limitText(body.contexto?.viatura || '', 180),
+    link_anuncio: limitText(body.contexto?.link_anuncio || '', 500)
+  };
+  const currentLead = mergeLead({ viatura: contexto.viatura }, body.lead || {});
+
+  if (!message.trim()) {
+    throw new AssistantRequestError('Mensagem vazia.', 400);
+  }
+
+  if (!contexto.viatura && !currentLead.viatura) {
+    return {
+      reply: 'Para garantir um atendimento correto, este assistente deve ser usado com o link de uma viatura concreta do stock. Indique a viatura do anúncio ou peça ao gestor o link correto.',
+      lead: currentLead,
+      estado: {
+        fora_do_tema: false,
+        precisa_humano: true,
+        interesse_real: false,
+        campos_em_falta: ['viatura'],
+        motivo: 'viatura_em_falta_no_contexto'
+      },
+      alertas: ['Link aberto sem viatura associada.']
+    };
+  }
+
+  if (isHardOffTopic(message)) {
+    const blocked = safeCommercialReply('fora_do_tema_detetado_no_servidor');
+    blocked.lead = currentLead;
+    return blocked;
+  }
+
+  const safeHistory = history.map((m) => ({
+    role: m.role === 'assistant' ? 'assistant' : 'user',
+    content: sanitizeMessage(m.content || '', 900)
+  }));
+
+  const input = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'user', content: `Contexto inicial do anúncio: ${JSON.stringify(contexto).slice(0, 1200)}` },
+    { role: 'user', content: `Lead atual permitida: ${JSON.stringify(currentLead).slice(0, 900)}` },
+    ...safeHistory,
+    { role: 'user', content: message }
+  ];
+
+  const response = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: process.env.OPENAI_MODEL || 'gpt-5.5',
+      input,
+      max_output_tokens: 520,
+      text: {
+        format: {
+          type: 'json_schema',
+          name: 'lead_response',
+          strict: true,
+          schema: LEAD_SCHEMA
+        }
+      }
+    }),
+    signal: options.signal
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new AssistantRequestError(data.error?.message || 'Erro na OpenAI API.', response.status);
+  }
+
+  const parsed = parseModelJson(data);
+  return validateModelPayload(parsed, currentLead, message);
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Use POST.' });
     return;
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    res.status(500).json({ error: 'Falta configurar OPENAI_API_KEY na Vercel.' });
-    return;
-  }
-
   try {
-    const body = req.body || {};
-    const message = sanitizeMessage(body.message || '', 1200);
-    const history = Array.isArray(body.history) ? body.history.slice(-8) : [];
-    const contexto = {
-      origem: limitText(body.contexto?.origem || 'standvirtual', 60),
-      viatura: limitText(body.contexto?.viatura || '', 180),
-      link_anuncio: limitText(body.contexto?.link_anuncio || '', 500)
-    };
-    const currentLead = mergeLead({ viatura: contexto.viatura }, body.lead || {});
-
-    if (!message.trim()) {
-      res.status(400).json({ error: 'Mensagem vazia.' });
-      return;
-    }
-
-    if (!contexto.viatura && !currentLead.viatura) {
-      res.status(200).json({
-        reply: 'Para garantir um atendimento correto, este assistente deve ser usado com o link de uma viatura concreta do stock. Indique a viatura do anúncio ou peça ao gestor o link correto.',
-        lead: currentLead,
-        estado: {
-          fora_do_tema: false,
-          precisa_humano: true,
-          interesse_real: false,
-          campos_em_falta: ['viatura'],
-          motivo: 'viatura_em_falta_no_contexto'
-        },
-        alertas: ['Link aberto sem viatura associada.']
-      });
-      return;
-    }
-
-    if (isHardOffTopic(message)) {
-      const blocked = safeCommercialReply('fora_do_tema_detetado_no_servidor');
-      blocked.lead = currentLead;
-      res.status(200).json(blocked);
-      return;
-    }
-
-    const safeHistory = history.map((m) => ({
-      role: m.role === 'assistant' ? 'assistant' : 'user',
-      content: sanitizeMessage(m.content || '', 900)
-    }));
-
-    const input = [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: `Contexto inicial do anúncio: ${JSON.stringify(contexto).slice(0, 1200)}` },
-      { role: 'user', content: `Lead atual permitida: ${JSON.stringify(currentLead).slice(0, 900)}` },
-      ...safeHistory,
-      { role: 'user', content: message }
-    ];
-
-    const response = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || 'gpt-5.5',
-        input,
-        max_output_tokens: 520,
-        text: {
-          format: {
-            type: 'json_schema',
-            name: 'lead_response',
-            strict: true,
-            schema: LEAD_SCHEMA
-          }
-        }
-      })
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      res.status(response.status).json({ error: data.error?.message || 'Erro na OpenAI API.' });
-      return;
-    }
-
-    const parsed = parseModelJson(data);
-    const safe = validateModelPayload(parsed, currentLead, message);
+    const safe = await runAssistant(req.body || {});
     res.status(200).json(safe);
   } catch (err) {
-    res.status(500).json({ error: 'Erro inesperado no assistente.' });
+    const status = err instanceof AssistantRequestError ? err.status : 500;
+    const error = err instanceof AssistantRequestError ? err.message : 'Erro inesperado no assistente.';
+    res.status(status).json({ error });
   }
 }

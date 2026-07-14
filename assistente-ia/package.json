@@ -1,1 +1,18 @@
-{"name":"assistente-ia-carlos","version":"1.0.0","private":true,"type":"module","scripts":{"dev":"vercel dev","start":"vercel dev"},"engines":{"node":"22.x"}}
+{
+  "name": "assistente-ia-carlos",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "start": "vercel dev",
+    "voice:create": "node scripts/create-speech-engine.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@elevenlabs/elevenlabs-js": "2.58.0"
+  },
+  "engines": {
+    "node": "22.x"
+  }
+}
