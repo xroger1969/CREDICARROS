@@ -85,6 +85,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;ba
 .quick{gap:7px}
 .quick button{background:#f7faff;border-color:#cbdcf3;color:#24466f;transition:.18s}
 .quick button:hover{transform:translateY(-1px);border-color:#0b5cff;color:#0b5cff}
+.quick button:disabled{cursor:default;opacity:.72;transform:none}
+.quick .quick-continue{flex:1 1 100%;border:0;border-radius:14px;background:linear-gradient(135deg,#0b5cff,#0647c8);color:#fff;padding:12px 15px;box-shadow:0 7px 16px #0b5cff25;font-size:15px}
+.quick .quick-continue:hover{color:#fff;border-color:transparent;box-shadow:0 9px 20px #0b5cff35}
 .row input{background:#f8faff;border-color:#ccd9ec;box-shadow:inset 0 1px 2px #173d7a08}
 .row input:focus{outline:3px solid #0b5cff22;border-color:#0b5cff;background:#fff}
 .row input.answer-needed{border-color:#0b5cff;background:#fff;box-shadow:0 0 0 4px #0b5cff20,inset 0 1px 2px #173d7a08}
@@ -167,7 +170,7 @@ body.keyboard-open .row button{width:auto;padding:0 16px;font-size:15px}
 <div id="chat" class="chat"></div>
 <div class="panel">
 <small id="voicePrivacy" class="voice-privacy hidden">A ElevenLabs gera apenas a voz das respostas. O microfone não é utilizado.</small>
-<div class="quick hidden"><button data-key="disponibilidade">✅ Disponibilidade</button><button data-key="financiamento">💳 Financiamento</button><button data-key="retoma">🔄 Retoma</button><button data-key="visita">📅 Marcar visita</button></div>
+<div class="quick hidden"><button data-key="disponibilidade">✅ Disponibilidade</button><button data-key="financiamento">💳 Financiamento</button><button data-key="retoma">🔄 Retoma</button><button data-key="visita">📅 Marcar visita</button><button id="quickContinue" class="quick-continue hidden" type="button">Continuar com as opções →</button></div>
 <form id="form" class="row"><input id="input" placeholder="Escreva a sua mensagem..." autocomplete="off" enterkeyhint="send"><button>Enviar</button></form>
 <div class="actions"><a id="sendLead" class="send-wa hidden" href="#" target="_blank" rel="noopener">Enviar pedido para Carlos</a><a class="sim-credit" href="https://xroger1969.github.io/CREDICARROS/" target="_blank" rel="noopener">Simulador de crédito</a><a class="sim-charge" href="https://xroger1969.github.io/CARREGADOR/" target="_blank" rel="noopener">Simulador de carregamento elétrico</a><a class="stock" href="https://spremium.standvirtual.com/inventory" target="_blank" rel="noopener">Ver stock</a></div>
 <div class="small">Nota: disponibilidade, equipamento, despesas, garantia, condições de financiamento, carregamento e preço final carecem sempre de confirmação com o gestor comercial.</div>
