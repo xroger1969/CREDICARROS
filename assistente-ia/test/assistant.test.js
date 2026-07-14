@@ -5,8 +5,13 @@ import voiceTokenHandler from '../api/voice-token.js';
 import {
   buildSpeechEngineConfiguration,
   DEFAULT_PORTUGUESE_VOICE_ID,
-  DEFAULT_TTS_MODEL
+  DEFAULT_TTS_MODEL,
+  SPEECH_ENGINE_NAME
 } from '../scripts/speech-engine-config.mjs';
+import {
+  publicVoiceWsUrl,
+  resolveSpeechEngine
+} from '../lib/voice-engine.js';
 
 function responseRecorder() {
   return {
@@ -122,4 +127,64 @@ test('o Speech Engine rejeita o modelo Flash apenas em inglês', () => {
     wsUrl: 'wss://credicarros.vercel.app/api/voice-ws',
     ttsModel: 'eleven_flash_v2'
   }), /só suporta inglês/);
+});
+
+test('o endereço do Speech Engine usa sempre o domínio público de produção', () => {
+  assert.equal(publicVoiceWsUrl({
+    VERCEL_PROJECT_PRODUCTION_URL: 'credicarros.vercel.app'
+  }), 'wss://credicarros.vercel.app/api/voice-ws');
+});
+
+test('o Speech Engine existente é encontrado e atualizado automaticamente', async () => {
+  const calls = [];
+  const client = {
+    speechEngine: {
+      async list(request) {
+        calls.push(['list', request]);
+        return {
+          speechEngines: [{
+            speechEngineId: 'seng_existente',
+            name: SPEECH_ENGINE_NAME,
+            tags: []
+          }]
+        };
+      },
+      async update(id, configuration) {
+        calls.push(['update', id, configuration]);
+        return { engineId: id };
+      }
+    }
+  };
+  const configuration = buildSpeechEngineConfiguration({
+    wsUrl: 'wss://credicarros.vercel.app/api/voice-ws'
+  });
+
+  const engineId = await resolveSpeechEngine({ client, configuration });
+
+  assert.equal(engineId, 'seng_existente');
+  assert.equal(calls[0][0], 'list');
+  assert.equal(calls[1][0], 'update');
+  assert.equal(calls[1][2].tts.voiceId, DEFAULT_PORTUGUESE_VOICE_ID);
+});
+
+test('o Speech Engine é criado automaticamente quando ainda não existe', async () => {
+  const client = {
+    speechEngine: {
+      async list() {
+        return { speechEngines: [] };
+      },
+      async create(configuration) {
+        assert.equal(configuration.name, SPEECH_ENGINE_NAME);
+        return { engineId: 'seng_novo' };
+      }
+    }
+  };
+  const configuration = buildSpeechEngineConfiguration({
+    wsUrl: 'wss://credicarros.vercel.app/api/voice-ws'
+  });
+
+  assert.equal(
+    await resolveSpeechEngine({ client, configuration }),
+    'seng_novo'
+  );
 });

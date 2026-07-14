@@ -1,3 +1,5 @@
+import { ensureSpeechEngine } from '../lib/voice-engine.js';
+
 const attempts = new Map();
 const WINDOW_MS = 60_000;
 const MAX_ATTEMPTS = 5;
@@ -40,10 +42,20 @@ function isRateLimited(req) {
 export default async function handler(req, res) {
   noStore(res);
   const apiKey = process.env.ELEVENLABS_API_KEY;
-  const engineId = process.env.ELEVENLABS_SPEECH_ENGINE_ID;
 
   if (req.method === 'GET') {
-    res.status(200).json({ configured: Boolean(apiKey && engineId) });
+    if (!apiKey) {
+      res.status(200).json({ configured: false });
+      return;
+    }
+
+    try {
+      await ensureSpeechEngine();
+      res.status(200).json({ configured: true });
+    } catch (error) {
+      console.error('[voice] Configuração ElevenLabs indisponível:', error?.message || 'erro desconhecido');
+      res.status(200).json({ configured: false });
+    }
     return;
   }
 
@@ -52,7 +64,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  if (!apiKey || !engineId) {
+  if (!apiKey) {
     res.status(503).json({ error: 'A conversa de voz ainda não está configurada.' });
     return;
   }
@@ -68,6 +80,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    const engineId = await ensureSpeechEngine();
     const response = await fetch(
       `https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=${encodeURIComponent(engineId)}`,
       {

@@ -27,34 +27,30 @@ Adicionar em **Settings → Environment Variables**:
 
 ```text
 ELEVENLABS_API_KEY=chave_privada_guardada_apenas_na_vercel
-ELEVENLABS_SPEECH_ENGINE_ID=seng_...
 ELEVENLABS_VOICE_ID=RROBrqjHiRb8zmRgGV11
 ELEVENLABS_TTS_MODEL=eleven_flash_v2_5
 ```
 
-A primeira variável é secreta. Nunca deve ser colocada no HTML, no JavaScript do navegador, no GitHub ou enviada por mensagem. As duas últimas são opcionais: os valores apresentados já são usados por defeito.
+A chave deve ter acesso de escrita a **ElevenAgents** e leitura de **Voices**. É secreta: nunca deve ser colocada no HTML, no JavaScript do navegador, no GitHub ou enviada por mensagem. As duas últimas variáveis são opcionais; os valores apresentados já são usados por defeito.
 
-### Criar o Speech Engine uma vez
+### Configuração automática do assistente de voz
 
-1. Publicar primeiro o endpoint WebSocket deste projeto.
-2. Num ambiente local seguro, definir `ELEVENLABS_API_KEY` sem a guardar no repositório.
-3. Na pasta `assistente-ia`, executar:
+Ao abrir a página, o servidor procura o Speech Engine **AutoValorPT — Assistente do Carlos**, atualiza-o com a voz portuguesa e cria-o automaticamente se ainda não existir. Não é necessário copiar nenhum código `seng_...`.
+
+Para confirmar manualmente a configuração num ambiente local seguro, definir `ELEVENLABS_API_KEY` sem a guardar no repositório e, na pasta `assistente-ia`, executar:
 
 ```text
 npm install
 npm run voice:create
 ```
 
-O comando usa por defeito:
+O site e o comando usam por defeito:
 
 ```text
 wss://credicarros.vercel.app/api/voice-ws
 ```
 
-Para outro domínio, definir `PUBLIC_WS_URL` antes do comando. A configuração usa por defeito uma voz masculina nativa de Portugal, adequada a atendimento comercial, com o modelo multilingue de baixa latência `eleven_flash_v2_5`. Outra voz ou modelo podem ser escolhidos com `ELEVENLABS_VOICE_ID` e `ELEVENLABS_TTS_MODEL`.
-
-4. Copiar apenas o valor `seng_...` apresentado pelo comando para `ELEVENLABS_SPEECH_ENGINE_ID` na Vercel.
-5. Fazer novo deploy e confirmar que o botão mostra **Falar com o assistente**.
+Para outro domínio, definir `PUBLIC_WS_URL`. A configuração usa por defeito uma voz masculina nativa de Portugal, adequada a atendimento comercial, com o modelo multilingue de baixa latência `eleven_flash_v2_5`. Outra voz ou modelo podem ser escolhidos com `ELEVENLABS_VOICE_ID` e `ELEVENLABS_TTS_MODEL`. `ELEVENLABS_SPEECH_ENGINE_ID` continua a ser aceite opcionalmente para atualizar um Speech Engine específico.
 
 O projeto da Vercel deve ter **Fluid Compute** ativo para aceitar WebSockets. A conversa escrita continua a funcionar normalmente quando a voz ainda não está configurada ou quando o utilizador não autoriza o microfone.
 
