@@ -462,16 +462,18 @@ test('a introdução é registada antes do arranque do assistente e fica dispon�
   assert.match(voice, /primeAudioContext/);
 });
 
-test('a lista inicial de stock fica bloqueada até terminar o respetivo anúncio de voz', () => {
+test('a lista inicial de stock fica bloqueada apenas até terminar a mensagem inicial', () => {
   const app = readFileSync(new URL('../app.js', import.meta.url), 'utf8');
   const html = readFileSync(new URL('../novo.html', import.meta.url), 'utf8');
   const voice = readFileSync(new URL('../voice-client.js', import.meta.url), 'utf8');
 
-  assert.match(app, /addCarOptions\(res,announcement\)/);
+  assert.match(app, /addCarOptions\(res,INITIAL_GREETING_SPEECH\)/);
   assert.match(app, /detail\.state==='finished'&&detail\.text===announcement/);
+  assert.doesNotMatch(app, /Já consultei o stock/);
   assert.match(app, /stock-locked/);
   assert.match(html, /\.stock-locked/);
   assert.match(app, /TOQUE NO ECRÃ/);
   assert.match(html, /stock-gate-title/);
   assert.match(voice, /emitSpeechState\('finished', text\)/);
+  assert.match(voice, /lastAssistantSpeech/);
 });
