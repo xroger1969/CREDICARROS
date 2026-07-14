@@ -1,17 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import chatHandler, { runAssistant } from '../api/chat.js';
-import voiceTokenHandler from '../api/voice-token.js';
-import {
-  buildSpeechEngineConfiguration,
-  DEFAULT_PORTUGUESE_VOICE_ID,
+import ttsHandler, {
+  cleanSpeechText,
   DEFAULT_TTS_MODEL,
-  SPEECH_ENGINE_NAME
-} from '../scripts/speech-engine-config.mjs';
-import {
-  publicVoiceWsUrl,
-  resolveSpeechEngine
-} from '../lib/voice-engine.js';
+  DEFAULT_TTS_VOICE_ID
+} from '../api/tts.js';
 
 function responseRecorder() {
   return {
@@ -26,6 +20,10 @@ function responseRecorder() {
       return this;
     },
     json(payload) {
+      this.body = payload;
+      return this;
+    },
+    end(payload) {
       this.body = payload;
       return this;
     }
@@ -73,118 +71,91 @@ test('o endpoint escrito mantém o contrato POST', async () => {
   assert.equal(res.body.error, 'Use POST.');
 });
 
-test('o estado da voz não revela credenciais', async () => {
-  const previousKey = process.env.ELEVENLABS_API_KEY;
-  const previousEngine = process.env.ELEVENLABS_SPEECH_ENGINE_ID;
+test('o estado da leitura de voz não revela credenciais', async () => {
+  const previous = process.env.ELEVENLABS_API_KEY;
   delete process.env.ELEVENLABS_API_KEY;
-  delete process.env.ELEVENLABS_SPEECH_ENGINE_ID;
   const res = responseRecorder();
-  await voiceTokenHandler({ method: 'GET', headers: {} }, res);
+  await ttsHandler({ method: 'GET', headers: {} }, res);
   assert.equal(res.statusCode, 200);
   assert.deepEqual(res.body, { configured: false });
   assert.equal(res.headers['cache-control'], 'no-store, max-age=0');
-  if (previousKey) process.env.ELEVENLABS_API_KEY = previousKey;
-  if (previousEngine) process.env.ELEVENLABS_SPEECH_ENGINE_ID = previousEngine;
+  if (previous) process.env.ELEVENLABS_API_KEY = previous;
 });
 
-test('o token de voz rejeita pedidos de outra origem', async () => {
-  const previousKey = process.env.ELEVENLABS_API_KEY;
-  const previousEngine = process.env.ELEVENLABS_SPEECH_ENGINE_ID;
+test('a leitura de voz rejeita pedidos de outra origem', async () => {
+  const previous = process.env.ELEVENLABS_API_KEY;
   process.env.ELEVENLABS_API_KEY = 'segredo-de-teste';
-  process.env.ELEVENLABS_SPEECH_ENGINE_ID = 'seng_teste';
-  const req = {
+  const res = responseRecorder();
+  await ttsHandler({
     method: 'POST',
     headers: {
       origin: 'https://exemplo-invalido.test',
       host: 'credicarros.vercel.app'
     },
-    socket: { remoteAddress: '127.0.0.1' }
-  };
-  const res = responseRecorder();
-  await voiceTokenHandler(req, res);
+    socket: { remoteAddress: '127.0.0.2' },
+    body: { text: 'Olá' }
+  }, res);
   assert.equal(res.statusCode, 403);
   assert.equal(res.body.error, 'Origem não autorizada.');
-  if (previousKey) process.env.ELEVENLABS_API_KEY = previousKey;
+  if (previous) process.env.ELEVENLABS_API_KEY = previous;
   else delete process.env.ELEVENLABS_API_KEY;
-  if (previousEngine) process.env.ELEVENLABS_SPEECH_ENGINE_ID = previousEngine;
-  else delete process.env.ELEVENLABS_SPEECH_ENGINE_ID;
 });
 
-test('o Speech Engine usa voz nativa portuguesa e um modelo multilingue', () => {
-  const config = buildSpeechEngineConfiguration({
-    wsUrl: 'wss://credicarros.vercel.app/api/voice-ws'
-  });
-
-  assert.equal(config.language, 'pt');
-  assert.equal(config.tts.voiceId, DEFAULT_PORTUGUESE_VOICE_ID);
-  assert.equal(config.tts.modelId, DEFAULT_TTS_MODEL);
-  assert.equal(config.tts.textNormalisationType, 'elevenlabs');
-  assert.ok(config.tts.stability < 0.5);
-});
-
-test('o Speech Engine rejeita o modelo Flash apenas em inglês', () => {
-  assert.throws(() => buildSpeechEngineConfiguration({
-    wsUrl: 'wss://credicarros.vercel.app/api/voice-ws',
-    ttsModel: 'eleven_flash_v2'
-  }), /só suporta inglês/);
-});
-
-test('o endereço do Speech Engine usa sempre o domínio público de produção', () => {
-  assert.equal(publicVoiceWsUrl({
-    VERCEL_PROJECT_PRODUCTION_URL: 'credicarros.vercel.app'
-  }), 'wss://credicarros.vercel.app/api/voice-ws');
-});
-
-test('o Speech Engine existente é encontrado e atualizado automaticamente', async () => {
-  const calls = [];
-  const client = {
-    speechEngine: {
-      async list(request) {
-        calls.push(['list', request]);
-        return {
-          speechEngines: [{
-            speechEngineId: 'seng_existente',
-            name: SPEECH_ENGINE_NAME,
-            tags: []
-          }]
-        };
-      },
-      async update(id, configuration) {
-        calls.push(['update', id, configuration]);
-        return { engineId: id };
-      }
-    }
-  };
-  const configuration = buildSpeechEngineConfiguration({
-    wsUrl: 'wss://credicarros.vercel.app/api/voice-ws'
-  });
-
-  const engineId = await resolveSpeechEngine({ client, configuration });
-
-  assert.equal(engineId, 'seng_existente');
-  assert.equal(calls[0][0], 'list');
-  assert.equal(calls[1][0], 'update');
-  assert.equal(calls[1][2].tts.voiceId, DEFAULT_PORTUGUESE_VOICE_ID);
-});
-
-test('o Speech Engine é criado automaticamente quando ainda não existe', async () => {
-  const client = {
-    speechEngine: {
-      async list() {
-        return { speechEngines: [] };
-      },
-      async create(configuration) {
-        assert.equal(configuration.name, SPEECH_ENGINE_NAME);
-        return { engineId: 'seng_novo' };
-      }
-    }
-  };
-  const configuration = buildSpeechEngineConfiguration({
-    wsUrl: 'wss://credicarros.vercel.app/api/voice-ws'
-  });
-
+test('o texto enviado para voz é limitado e não lê endereços web', () => {
   assert.equal(
-    await resolveSpeechEngine({ client, configuration }),
-    'seng_novo'
+    cleanSpeechText('Veja https://example.test/carro agora'),
+    'Veja link do anúncio agora'
   );
+  assert.equal(cleanSpeechText('x'.repeat(1000)).length, 900);
+});
+
+test('as respostas usam a voz portuguesa e o modelo natural da ElevenLabs', async () => {
+  const previousKey = process.env.ELEVENLABS_API_KEY;
+  const previousVoice = process.env.ELEVENLABS_VOICE_ID;
+  const previousModel = process.env.ELEVENLABS_TTS_MODEL;
+  const previousFetch = globalThis.fetch;
+  process.env.ELEVENLABS_API_KEY = 'segredo-de-teste';
+  delete process.env.ELEVENLABS_VOICE_ID;
+  delete process.env.ELEVENLABS_TTS_MODEL;
+  let outbound;
+  globalThis.fetch = async (url, options) => {
+    outbound = { url, options };
+    return {
+      ok: true,
+      status: 200,
+      async arrayBuffer() {
+        return Uint8Array.from([73, 68, 51]).buffer;
+      }
+    };
+  };
+
+  try {
+    const res = responseRecorder();
+    await ttsHandler({
+      method: 'POST',
+      headers: {
+        origin: 'https://credicarros.vercel.app',
+        host: 'credicarros.vercel.app'
+      },
+      socket: { remoteAddress: '127.0.0.3' },
+      body: { text: 'Olá, como posso ajudar?' }
+    }, res);
+
+    const payload = JSON.parse(outbound.options.body);
+    assert.match(outbound.url, new RegExp(DEFAULT_TTS_VOICE_ID));
+    assert.equal(payload.model_id, DEFAULT_TTS_MODEL);
+    assert.equal(payload.text, 'Olá, como posso ajudar?');
+    assert.equal(payload.voice_settings.speed, 0.98);
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.headers['content-type'], 'audio/mpeg');
+    assert.ok(Buffer.isBuffer(res.body));
+  } finally {
+    globalThis.fetch = previousFetch;
+    if (previousKey) process.env.ELEVENLABS_API_KEY = previousKey;
+    else delete process.env.ELEVENLABS_API_KEY;
+    if (previousVoice) process.env.ELEVENLABS_VOICE_ID = previousVoice;
+    else delete process.env.ELEVENLABS_VOICE_ID;
+    if (previousModel) process.env.ELEVENLABS_TTS_MODEL = previousModel;
+    else delete process.env.ELEVENLABS_TTS_MODEL;
+  }
 });

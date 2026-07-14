@@ -17,9 +17,9 @@ OPENAI_MODEL=gpt-5.5
 
 6. Fazer Deploy.
 
-## Conversa de voz ElevenLabs
+## Leitura das respostas com ElevenLabs
 
-A voz usa o **Speech Engine** da ElevenLabs. O chat escrito e a voz chamam o mesmo núcleo comercial (`runAssistant`), por isso mantêm as mesmas regras, contexto da viatura e validações. A transcrição da conversa aparece no chat e pode seguir no resumo enviado ao Carlos pelo WhatsApp.
+O cliente continua a escolher opções e a escrever normalmente. Quando ativa **Voz ligada**, apenas as respostas do assistente são lidas com uma voz natural da ElevenLabs. O site nunca pede acesso ao microfone e não cria uma conversa de voz separada.
 
 ### Variáveis privadas na Vercel
 
@@ -28,33 +28,14 @@ Adicionar em **Settings → Environment Variables**:
 ```text
 ELEVENLABS_API_KEY=chave_privada_guardada_apenas_na_vercel
 ELEVENLABS_VOICE_ID=RROBrqjHiRb8zmRgGV11
-ELEVENLABS_TTS_MODEL=eleven_flash_v2_5
+ELEVENLABS_TTS_MODEL=eleven_multilingual_v2
 ```
 
-A chave deve ter acesso de escrita a **ElevenAgents** e leitura de **Voices**. É secreta: nunca deve ser colocada no HTML, no JavaScript do navegador, no GitHub ou enviada por mensagem. As duas últimas variáveis são opcionais; os valores apresentados já são usados por defeito.
+A chave precisa apenas de acesso a **Text to Speech** e leitura de **Voices**. É secreta: nunca deve ser colocada no HTML, no JavaScript do navegador, no GitHub ou enviada por mensagem. As duas últimas variáveis são opcionais; a voz portuguesa e o modelo apresentados já são usados por defeito.
 
-### Configuração automática do assistente de voz
+### Funcionamento
 
-Ao abrir a página, o servidor procura o Speech Engine **AutoValorPT — Assistente do Carlos**, atualiza-o com a voz portuguesa e cria-o automaticamente se ainda não existir. Não é necessário copiar nenhum código `seng_...`.
-
-Para confirmar manualmente a configuração num ambiente local seguro, definir `ELEVENLABS_API_KEY` sem a guardar no repositório e, na pasta `assistente-ia`, executar:
-
-```text
-npm install
-npm run voice:create
-```
-
-O site e o comando usam por defeito:
-
-```text
-wss://credicarros.vercel.app/api/voice-ws
-```
-
-Para outro domínio, definir `PUBLIC_WS_URL`. A configuração usa por defeito uma voz masculina nativa de Portugal, adequada a atendimento comercial, com o modelo multilingue de baixa latência `eleven_flash_v2_5`. Outra voz ou modelo podem ser escolhidos com `ELEVENLABS_VOICE_ID` e `ELEVENLABS_TTS_MODEL`. `ELEVENLABS_SPEECH_ENGINE_ID` continua a ser aceite opcionalmente para atualizar um Speech Engine específico.
-
-O projeto da Vercel deve ter **Fluid Compute** ativo para aceitar WebSockets. A conversa escrita continua a funcionar normalmente quando a voz ainda não está configurada ou quando o utilizador não autoriza o microfone.
-
-A configuração criada pelo comando limita cada conversa a quatro minutos, não grava a voz e pede à ElevenLabs para eliminar áudio, transcrição e dados pessoais após o período mínimo configurado de um dia. O ritmo e a estabilidade foram afinados para uma conversa mais humana, sem perder clareza comercial.
+O navegador envia ao endpoint seguro `/api/tts` somente o texto de cada resposta do assistente. O servidor gera o áudio e devolve-o ao navegador. A chave privada nunca é enviada ao cliente. A voz começa desligada para não reproduzir áudio inesperadamente; basta tocar uma vez em **Voz desligada** para ativar a leitura. O modelo `eleven_multilingual_v2` privilegia naturalidade e consistência em português.
 
 ## Uso recomendado
 
@@ -91,7 +72,7 @@ https://o-teu-projeto.vercel.app/?origem=standvirtual&viatura=Renault%20Zoe%20Li
 
 A chave da OpenAI nunca fica no HTML. Ela fica guardada nas variáveis de ambiente da Vercel e é usada apenas pelo endpoint seguro `/api/chat`.
 
-A chave da ElevenLabs também fica apenas no servidor. O navegador recebe um token temporário através de `/api/voice-token`; o endpoint valida a origem, limita tentativas e nunca devolve a chave privada.
+A chave da ElevenLabs também fica apenas no servidor. O endpoint `/api/tts` valida a origem, limita pedidos e devolve apenas o ficheiro de áudio gerado.
 
 ## Dados permitidos
 
