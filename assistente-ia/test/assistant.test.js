@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
 import chatHandler, { runAssistant } from '../api/chat.js';
 import ttsHandler, {
   cleanSpeechText,
@@ -158,4 +160,204 @@ test('as respostas usam a voz portuguesa e o modelo natural da ElevenLabs', asyn
     if (previousModel) process.env.ELEVENLABS_TTS_MODEL = previousModel;
     else delete process.env.ELEVENLABS_TTS_MODEL;
   }
+});
+
+function browserFlow() {
+  function createElement(tag = 'div', text = '') {
+    const classes = new Set();
+    let content = String(text);
+    let html = content;
+    const el = {
+      tagName: tag.toUpperCase(),
+      dataset: {},
+      attributes: {},
+      children: [],
+      parentNode: null,
+      style: {},
+      scrollTop: 0,
+      disabled: false,
+      value: '',
+      href: '',
+      classList: {
+        add: (...names) => names.forEach((name) => classes.add(name)),
+        remove: (...names) => names.forEach((name) => classes.delete(name)),
+        contains: (name) => classes.has(name),
+        toggle(name, force) {
+          const active = force === undefined ? !classes.has(name) : Boolean(force);
+          if (active) classes.add(name);
+          else classes.delete(name);
+          return active;
+        }
+      },
+      appendChild(child) {
+        if (child.parentNode) child.parentNode.children = child.parentNode.children.filter((item) => item !== child);
+        child.parentNode = this;
+        this.children.push(child);
+        return child;
+      },
+      append(...children) {
+        children.forEach((child) => this.appendChild(child));
+      },
+      remove() {
+        if (this.parentNode) this.parentNode.children = this.parentNode.children.filter((item) => item !== this);
+      },
+      setAttribute(name, value) {
+        this.attributes[name] = String(value);
+      },
+      addEventListener() {},
+      focus() {},
+      click() {}
+    };
+    Object.defineProperties(el, {
+      className: {
+        get: () => [...classes].join(' '),
+        set(value) {
+          classes.clear();
+          String(value || '').split(/\s+/).filter(Boolean).forEach((name) => classes.add(name));
+        }
+      },
+      textContent: {
+        get: () => content,
+        set(value) {
+          content = String(value ?? '');
+          html = content;
+        }
+      },
+      innerHTML: {
+        get: () => html,
+        set(value) {
+          html = String(value ?? '');
+          content = html.replace(/<[^>]*>/g, '');
+        }
+      },
+      lastChild: {
+        get: () => el.children.at(-1)
+      },
+      scrollHeight: {
+        get: () => el.children.length * 50
+      }
+    });
+    el.textContent = text;
+    return el;
+  }
+
+  const chat = createElement('div');
+  const form = createElement('form');
+  const input = createElement('input');
+  const sendLead = createElement('a');
+  const quick = createElement('div');
+  quick.className = 'quick hidden';
+  const optionData = [
+    ['disponibilidade', '✅ Disponibilidade'],
+    ['financiamento', '💳 Financiamento'],
+    ['retoma', '🔄 Retoma'],
+    ['visita', '📅 Marcar visita']
+  ];
+  const buttons = optionData.map(([key, label]) => {
+    const button = createElement('button', label);
+    button.dataset.key = key;
+    quick.appendChild(button);
+    return button;
+  });
+  const ids = { chat, form, input, sendLead };
+  const document = {
+    body: createElement('body'),
+    documentElement: { style: { setProperty() {} } },
+    getElementById: (id) => ids[id],
+    querySelector: (selector) => selector === '.quick' ? quick : null,
+    querySelectorAll(selector) {
+      if (selector === '.quick button') return buttons;
+      if (selector === '.bot.latest') return chat.children.filter((item) => item.classList?.contains('bot') && item.classList.contains('latest'));
+      return [];
+    },
+    createElement
+  };
+  const speech = [];
+  const timers = new Map();
+  let timerId = 0;
+  const sandbox = {
+    document,
+    location: { search: '?viatura=Tesla%20Model%203' },
+    URLSearchParams,
+    console,
+    fetch: async () => ({ json: async () => ({ results: [] }) }),
+    requestAnimationFrame: (fn) => fn(),
+    setTimeout(fn) {
+      timerId += 1;
+      timers.set(timerId, fn);
+      return timerId;
+    },
+    clearTimeout(id) {
+      timers.delete(id);
+    }
+  };
+  sandbox.window = {
+    innerHeight: 800,
+    visualViewport: null,
+    addEventListener() {},
+    queueAssistantSpeech(text, options) {
+      speech.push({ text, options });
+    }
+  };
+  sandbox.runTimers = () => {
+    const pending = [...timers.values()];
+    timers.clear();
+    pending.forEach((fn) => fn());
+  };
+
+  const source = readFileSync(new URL('../app.js', import.meta.url), 'utf8');
+  vm.runInNewContext(source, sandbox);
+  return { sandbox, buttons, speech };
+}
+
+test('as opções clicadas são acumuladas e as desmarcadas saem do resumo e da lead', () => {
+  const { sandbox, buttons, speech } = browserFlow();
+
+  buttons[0].onclick();
+  buttons[1].onclick();
+  buttons[2].onclick();
+
+  assert.match(sandbox.summary(), /disponibilidade, financiamento e retoma/);
+  assert.match(sandbox.leadText(), /Opções selecionadas: disponibilidade, financiamento e retoma/);
+  assert.equal(buttons[1].attributes['aria-pressed'], 'true');
+  sandbox.runTimers();
+  assert.match(speech.at(-1).text, /disponibilidade, financiamento e retoma/);
+  assert.equal(speech.at(-1).options.replace, true);
+
+  buttons[1].onclick();
+
+  assert.match(sandbox.summary(), /disponibilidade e retoma/);
+  assert.doesNotMatch(sandbox.summary(), /financiamento/);
+  assert.doesNotMatch(sandbox.leadText(), /financiamento/i);
+  assert.equal(buttons[1].attributes['aria-pressed'], 'false');
+});
+
+test('os detalhes de várias opções ficam todos compilados e uma correção remove os respetivos dados', () => {
+  const { sandbox, buttons } = browserFlow();
+
+  buttons.forEach((button) => button.onclick());
+  sandbox.processQuick('Quero confirmar a disponibilidade');
+  sandbox.processQuick('Entrada de 5.000 euros e prestação de 300 euros');
+  sandbox.processQuick('Renault Clio de 2018 com 80.000 km');
+  sandbox.processQuick('Sexta-feira às 15 horas');
+
+  const compiled = sandbox.leadText();
+  assert.match(compiled, /Opções selecionadas: disponibilidade, financiamento, retoma e marcação de visita\/test-drive/);
+  assert.match(compiled, /Entrada\/Prestação: .*5\.000 euros/);
+  assert.match(compiled, /Retoma: Renault Clio de 2018/);
+  assert.match(compiled, /Horário\/Visita: .*Sexta-feira às 15 horas/);
+
+  buttons[2].onclick();
+  assert.doesNotMatch(sandbox.leadText(), /Renault Clio/);
+  assert.doesNotMatch(sandbox.summary(), /retoma/);
+});
+
+test('a voz omite contagens técnicas do tipo passo 1 de 2', () => {
+  const source = readFileSync(new URL('../voice-client.js', import.meta.url), 'utf8');
+  const body = source.match(/function cleanForSpeech\(value\) \{([\s\S]*?)\n  \}/)?.[1];
+  assert.ok(body, 'função de limpeza da voz encontrada');
+  const cleanForSpeech = Function('value', body);
+
+  assert.equal(cleanForSpeech('1/2 — Retoma: Qual é a viatura?'), 'Retoma: Qual é a viatura?');
+  assert.equal(cleanForSpeech('Passo 1 de 2. Financiamento: qual é a entrada?'), 'Financiamento: qual é a entrada?');
 });

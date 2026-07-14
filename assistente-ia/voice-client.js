@@ -28,13 +28,14 @@
     return String(value || '')
       .replace(/https?:\/\/\S+/gi, 'link do anúncio')
       .replace(/[✅💳🔄📅🚗🚙👋🎙️🔊🔇]/gu, '')
-      .replace(/\b(\d+)\/(\d+)\s*[—-]\s*/g, 'Passo $1 de $2. ')
+      .replace(/\b\d+\s*\/\s*\d+\s*[—-]\s*/g, '')
+      .replace(/\bpasso\s+\d+\s+de\s+\d+[.:—-]?\s*/gi, '')
       .replace(/\s+/g, ' ')
       .trim()
       .slice(0, 900);
   }
 
-  function stopPlayback() {
+  function interruptPlayback() {
     requestController?.abort();
     requestController = null;
     if (source) {
@@ -42,6 +43,10 @@
       source.disconnect();
       source = null;
     }
+  }
+
+  function stopPlayback() {
+    interruptPlayback();
     playing = false;
   }
 
@@ -99,10 +104,14 @@
     if (enabled && !failed) setButton('on', 'Voz ligada', 'As respostas serão lidas pela ElevenLabs', '🔊');
   }
 
-  window.queueAssistantSpeech = (value) => {
+  window.queueAssistantSpeech = (value, options = {}) => {
     if (!enabled || !configured) return;
     const text = cleanForSpeech(value);
     if (!text || /^A analisar/i.test(text)) return;
+    if (options.replace) {
+      queue = [];
+      if (playing) interruptPlayback();
+    }
     queue.push(text);
     void playQueue();
   };
