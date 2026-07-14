@@ -362,24 +362,23 @@ function browserFlow() {
   return { sandbox, buttons, speech };
 }
 
-test('as opções clicadas são acumuladas e as desmarcadas saem do resumo e da lead', () => {
+test('as opções clicadas são acumuladas e as desmarcadas saem da lead', () => {
   const { sandbox, buttons, speech } = browserFlow();
 
   buttons[0].onclick();
   buttons[1].onclick();
   buttons[2].onclick();
 
-  assert.match(sandbox.summary(), /disponibilidade, financiamento e retoma/);
   assert.match(sandbox.leadText(), /Opções selecionadas: disponibilidade, financiamento e retoma/);
   assert.equal(buttons[1].attributes['aria-pressed'], 'true');
   sandbox.runTimers();
-  assert.match(speech.at(-1).text, /disponibilidade, financiamento e retoma/);
+  assert.match(speech.at(-1).text, /^Disponibilidade:/);
+  assert.doesNotMatch(speech.at(-1).text, /Opções selecionadas|Pode tocar novamente/i);
   assert.equal(speech.at(-1).options.replace, true);
 
   buttons[1].onclick();
 
-  assert.match(sandbox.summary(), /disponibilidade e retoma/);
-  assert.doesNotMatch(sandbox.summary(), /financiamento/);
+  assert.match(sandbox.leadText(), /disponibilidade e retoma/);
   assert.doesNotMatch(sandbox.leadText(), /financiamento/i);
   assert.equal(buttons[1].attributes['aria-pressed'], 'false');
 });
@@ -402,7 +401,20 @@ test('os detalhes de várias opções ficam todos compilados e uma correção re
 
   buttons[2].onclick();
   assert.doesNotMatch(sandbox.leadText(), /Renault Clio/);
-  assert.doesNotMatch(sandbox.summary(), /retoma/);
+  assert.doesNotMatch(sandbox.leadText(), /retoma/i);
+});
+
+test('a conversa não mostra nem lê um resumo intermédio das opções selecionadas', () => {
+  const { sandbox, buttons, speech } = browserFlow();
+
+  buttons[0].onclick();
+  buttons[1].onclick();
+  sandbox.runTimers();
+
+  const chatText = sandbox.document.getElementById('chat').children.map((item) => item.textContent).join(' ');
+  assert.doesNotMatch(chatText, /Opções selecionadas|Pode tocar novamente/i);
+  assert.doesNotMatch(speech.at(-1).text, /Opções selecionadas|Pode tocar novamente/i);
+  assert.match(sandbox.leadText(), /Opções selecionadas: disponibilidade e financiamento/);
 });
 
 test('a voz omite contagens técnicas do tipo passo 1 de 2', () => {
