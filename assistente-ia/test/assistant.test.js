@@ -424,3 +424,13 @@ test('o controlo da voz fica no topo e o assistente inicia com a voz ligada', ()
   assert.match(voice, /let enabled = true;/);
   assert.match(voice, /O som começa no primeiro toque/);
 });
+
+test('a introdução é registada antes do arranque do assistente e fica disponível para leitura', () => {
+  const html = readFileSync(new URL('../novo.html', import.meta.url), 'utf8');
+  const voice = readFileSync(new URL('../voice-client.js', import.meta.url), 'utf8');
+
+  assert.ok(html.indexOf('./voice-client.js') < html.indexOf('./app.js'));
+  assert.match(voice, /queue\.push\(text\)/);
+  assert.match(voice, /touchend/);
+  assert.match(voice, /primeAudioContext/);
+});

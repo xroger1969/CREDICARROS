@@ -20,6 +20,8 @@
     voiceToggle.classList.remove('ready', 'loading', 'on', 'speaking');
     if (state) voiceToggle.classList.add(state);
     voiceToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+    voiceToggle.setAttribute('aria-label', main + '. ' + detail);
+    voiceToggle.title = detail;
     icon.textContent = symbol;
     label.textContent = main;
     status.textContent = detail;
@@ -113,8 +115,8 @@
       queue = [];
       if (playing) interruptPlayback();
     }
-    if (!configured || !unlocked) queue = [text];
-    else queue.push(text);
+    queue.push(text);
+    if (!configured || !unlocked) queue = queue.slice(-3);
     void playQueue();
   };
 
@@ -123,17 +125,29 @@
     return latest?.textContent || '';
   }
 
-  const interactionEvents = ['pointerdown', 'touchstart', 'keydown'];
+  const interactionEvents = ['pointerdown', 'touchend', 'click', 'keydown'];
 
   function stopWaitingForInteraction() {
     interactionEvents.forEach((eventName) => document.removeEventListener(eventName, unlockOnInteraction, true));
+  }
+
+  function primeAudioContext() {
+    const silentBuffer = audioContext.createBuffer(1, 1, audioContext.sampleRate || 44100);
+    const silentSource = audioContext.createBufferSource();
+    silentSource.buffer = silentBuffer;
+    silentSource.connect(audioContext.destination);
+    silentSource.onended = () => silentSource.disconnect();
+    silentSource.start(0);
   }
 
   async function unlockAudio() {
     if (!enabled) return false;
     if (!AudioContextClass) throw new Error('Áudio não suportado.');
     if (!audioContext) audioContext = new AudioContextClass();
-    if (audioContext.state !== 'running') await audioContext.resume();
+    if (audioContext.state !== 'running') {
+      primeAudioContext();
+      await audioContext.resume();
+    }
     unlocked = audioContext.state === 'running';
     if (!unlocked) return false;
     stopWaitingForInteraction();
@@ -189,7 +203,7 @@
       privacy.classList.toggle('hidden', !configured);
       if (configured) {
         setButton('on', 'Voz ligada', unlocked ? 'As respostas serão lidas pela ElevenLabs' : 'O som começa no primeiro toque', '🔊');
-        void playQueue();
+        void unlockAudio().catch(() => {});
       } else {
         enabled = false;
         queue = [];
