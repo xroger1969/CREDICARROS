@@ -48,6 +48,13 @@
 .car-options .car-details:hover{background:linear-gradient(145deg,#2873ff,#0b5cff)}
 .car-options .car-other{background:linear-gradient(100deg,#f5f8ff,#eef3ff);border-color:#aebfe0;color:#12356c}
 .car-options .car-other .brand-logo-fallback{background:#dce8ff;color:#0647c8}
+/* A lista só fica disponível depois da apresentação de voz do stock. */
+.car-options.stock-locked{position:relative;min-height:190px;overflow:hidden;border-radius:18px}
+.stock-locked>.car-card,.stock-locked>.car-other{pointer-events:none;opacity:.35;filter:saturate(.55) blur(1px);user-select:none}
+.car-options .stock-gate{position:absolute;inset:0;z-index:8;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;margin:0;padding:22px;border:1px solid #9eb9e6;border-radius:18px;background:#f4f8fff0;color:#1748b8;text-align:center;box-shadow:inset 0 0 30px #dceaff;cursor:pointer}
+.stock-gate-icon{font-size:30px;line-height:1}
+.stock-gate strong{font-size:15px}
+.stock-gate small{max-width:280px;color:#61728c;font-size:11px;line-height:1.35}
 /* Experiência mais humana e guiada, sem alterar o funcionamento do assistente. */
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:radial-gradient(circle at 15% 10%,#dceaff 0,transparent 28%),radial-gradient(circle at 90% 90%,#dff8ee 0,transparent 25%),#f3f6fb}
 .friendly-header{position:relative;overflow:hidden;background:linear-gradient(135deg,#075dea 0%,#1748b8 58%,#493bb8 100%);padding:20px 22px 16px}

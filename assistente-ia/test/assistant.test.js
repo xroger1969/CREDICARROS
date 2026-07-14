@@ -446,3 +446,15 @@ test('a introdução é registada antes do arranque do assistente e fica dispon�
   assert.match(voice, /touchend/);
   assert.match(voice, /primeAudioContext/);
 });
+
+test('a lista inicial de stock fica bloqueada até terminar o respetivo anúncio de voz', () => {
+  const app = readFileSync(new URL('../app.js', import.meta.url), 'utf8');
+  const html = readFileSync(new URL('../novo.html', import.meta.url), 'utf8');
+  const voice = readFileSync(new URL('../voice-client.js', import.meta.url), 'utf8');
+
+  assert.match(app, /addCarOptions\(res,announcement\)/);
+  assert.match(app, /detail\.state==='finished'&&detail\.text===announcement/);
+  assert.match(app, /stock-locked/);
+  assert.match(html, /\.stock-locked/);
+  assert.match(voice, /emitSpeechState\('finished', text\)/);
+});
