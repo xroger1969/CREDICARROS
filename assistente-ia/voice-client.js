@@ -10,8 +10,9 @@
   let audioContext = null;
   let source = null;
   let requestController = null;
-  let enabled = false;
+  let enabled = true;
   let configured = false;
+  let unlocked = false;
   let playing = false;
   let queue = [];
 
@@ -69,7 +70,7 @@
   }
 
   async function playQueue() {
-    if (playing || !enabled || !configured || !queue.length) return;
+    if (playing || !enabled || !configured || !unlocked || audioContext?.state !== 'running' || !queue.length) return;
     playing = true;
     let failed = false;
 
@@ -105,14 +106,15 @@
   }
 
   window.queueAssistantSpeech = (value, options = {}) => {
-    if (!enabled || !configured) return;
+    if (!enabled) return;
     const text = cleanForSpeech(value);
     if (!text || /^A analisar/i.test(text)) return;
     if (options.replace) {
       queue = [];
       if (playing) interruptPlayback();
     }
-    queue.push(text);
+    if (!configured || !unlocked) queue = [text];
+    else queue.push(text);
     void playQueue();
   };
 
@@ -120,6 +122,34 @@
     const latest = document.querySelector('.msg.bot.latest');
     return latest?.textContent || '';
   }
+
+  const interactionEvents = ['pointerdown', 'touchstart', 'keydown'];
+
+  function stopWaitingForInteraction() {
+    interactionEvents.forEach((eventName) => document.removeEventListener(eventName, unlockOnInteraction, true));
+  }
+
+  async function unlockAudio() {
+    if (!enabled) return false;
+    if (!AudioContextClass) throw new Error('Áudio não suportado.');
+    if (!audioContext) audioContext = new AudioContextClass();
+    if (audioContext.state !== 'running') await audioContext.resume();
+    unlocked = audioContext.state === 'running';
+    if (!unlocked) return false;
+    stopWaitingForInteraction();
+    if (configured) {
+      setButton('on', 'Voz ligada', 'As respostas serão lidas pela ElevenLabs', '🔊');
+      void playQueue();
+    }
+    return true;
+  }
+
+  function unlockOnInteraction(event) {
+    if (voiceToggle.contains(event.target)) return;
+    void unlockAudio().catch(() => {});
+  }
+
+  interactionEvents.forEach((eventName) => document.addEventListener(eventName, unlockOnInteraction, true));
 
   voiceToggle.addEventListener('click', async () => {
     if (!configured) return;
@@ -133,10 +163,8 @@
     }
 
     try {
-      if (!AudioContextClass) throw new Error('Áudio não suportado.');
-      if (!audioContext) audioContext = new AudioContextClass();
-      await audioContext.resume();
       enabled = true;
+      if (!await unlockAudio()) throw new Error('Áudio bloqueado.');
       setButton('on', 'Voz ligada', 'As respostas serão lidas pela ElevenLabs', '🔊');
       window.queueAssistantSpeech(latestAssistantMessage());
     } catch {
@@ -149,6 +177,7 @@
     enabled = false;
     queue = [];
     stopPlayback();
+    stopWaitingForInteraction();
     audioContext?.close().catch(() => {});
   });
 
@@ -159,12 +188,17 @@
       voiceToggle.disabled = !configured;
       privacy.classList.toggle('hidden', !configured);
       if (configured) {
-        setButton('ready', 'Voz desligada', 'Toque para ouvir as respostas', '🔇');
+        setButton('on', 'Voz ligada', unlocked ? 'As respostas serão lidas pela ElevenLabs' : 'O som começa no primeiro toque', '🔊');
+        void playQueue();
       } else {
+        enabled = false;
+        queue = [];
         setButton('', 'Voz em preparação', 'O chat escrito continua disponível', '🔇');
       }
     })
     .catch(() => {
+      enabled = false;
+      queue = [];
       voiceToggle.disabled = true;
       setButton('', 'Voz indisponível', 'O chat escrito continua disponível', '🔇');
     });
