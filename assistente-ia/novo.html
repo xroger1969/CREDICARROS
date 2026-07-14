@@ -112,12 +112,28 @@ body.keyboard-open .row button{width:auto;padding:0 16px;font-size:15px}
 .voice.speaking .voice-indicator{background:#0b5cff;animation:voicePulse .7s infinite}
 .voice-privacy{display:block;max-width:520px;margin:-4px 2px 12px;color:#68758a;font-size:11px;line-height:1.4}
 @keyframes voicePulse{50%{transform:scale(1.55);opacity:.45}}
+/* Controlo de voz sempre visível no topo, sem ocupar espaço na conversa. */
+.header-controls{display:flex;align-items:center;justify-content:flex-end;gap:7px}
+.friendly-header .voice{width:auto;max-width:none;min-height:30px;margin:0;padding:4px 8px 4px 5px;gap:5px;border-radius:999px;background:#ffffff18;border-color:#ffffff38;color:#fff;box-shadow:none;text-align:left}
+.friendly-header .voice:not(:disabled):hover{transform:none;background:#ffffff26;box-shadow:none}
+.friendly-header .voice:disabled{opacity:.72}
+.friendly-header .voice-icon{width:21px;height:21px;flex-basis:21px;border-radius:50%;background:#ffffff1f;color:#fff;box-shadow:none;font-size:12px}
+.friendly-header .voice-copy{flex:none}
+.friendly-header .voice-label{font-size:10.5px;line-height:1;white-space:nowrap}
+.friendly-header .voice-status{display:none}
+.friendly-header .voice-indicator{width:7px;height:7px;flex-basis:7px;background:#a9bad5}
+.friendly-header .voice.ready{background:#ffffff18;border-color:#ffffff38;color:#fff}
+.friendly-header .voice.ready .voice-indicator{background:#dce7f8}
+.friendly-header .voice.on,.friendly-header .voice.speaking{background:#0d8e626b;border-color:#73edbd;color:#fff}
+.friendly-header .voice.on .voice-indicator{background:#63e6a5}
+.friendly-header .voice.speaking .voice-indicator{background:#fff}
+@media(max-width:560px){.header-controls{gap:5px}.friendly-header .online{padding:4px 7px;font-size:9.5px}.friendly-header .voice{min-height:27px;padding:3px 6px 3px 4px;gap:4px}.friendly-header .voice-label{font-size:9.5px}.friendly-header .voice-icon{width:19px;height:19px;flex-basis:19px;font-size:11px}.friendly-header .voice-indicator{width:6px;height:6px;flex-basis:6px}}
 </style>
 </head>
 <body>
 <div class="app">
 <header class="friendly-header">
-<div class="welcome-bar"><div class="tag">AutoValorPT</div><div class="online">Disponível</div></div>
+<div class="welcome-bar"><div class="tag">AutoValorPT</div><div class="header-controls"><div class="online">Disponível</div><button id="voiceToggle" class="voice" type="button" aria-pressed="true" disabled><span class="voice-icon" aria-hidden="true">🔊</span><span class="voice-copy"><strong class="voice-label">Voz ligada</strong><small class="voice-status">A verificar o serviço ElevenLabs</small></span><span class="voice-indicator" aria-hidden="true"></span></button></div></div>
 <div class="welcome-main">
 <div class="assistant-figure" aria-hidden="true">
 <svg viewBox="0 0 120 120" role="img">
@@ -142,7 +158,6 @@ body.keyboard-open .row button{width:auto;padding:0 16px;font-size:15px}
 </header>
 <div id="chat" class="chat"></div>
 <div class="panel">
-<button id="voiceToggle" class="voice" type="button" aria-pressed="false" disabled><span class="voice-icon" aria-hidden="true">🔇</span><span class="voice-copy"><strong class="voice-label">A preparar voz…</strong><small class="voice-status">A verificar o serviço ElevenLabs</small></span><span class="voice-indicator" aria-hidden="true"></span></button>
 <small id="voicePrivacy" class="voice-privacy hidden">A ElevenLabs gera apenas a voz das respostas. O microfone não é utilizado.</small>
 <div class="quick hidden"><button data-key="disponibilidade">✅ Disponibilidade</button><button data-key="financiamento">💳 Financiamento</button><button data-key="retoma">🔄 Retoma</button><button data-key="visita">📅 Marcar visita</button></div>
 <form id="form" class="row"><input id="input" placeholder="Escreva a sua mensagem..." autocomplete="off"><button>Enviar</button></form>
