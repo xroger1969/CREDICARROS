@@ -332,6 +332,10 @@ export async function runAssistant(body = {}, options = {}) {
 
   const input = [
     { role: 'system', content: SYSTEM_PROMPT },
+    ...(contexto.origem === 'voz-elevenlabs' ? [{
+      role: 'system',
+      content: 'Esta é uma conversa por voz. Fala de forma calorosa e descontraída, trata o cliente por tu, usa uma ou duas frases curtas de cada vez e faz apenas uma pergunta por resposta. Evita listas, endereços web e linguagem demasiado formal.'
+    }] : []),
     { role: 'user', content: `Contexto inicial do anúncio: ${JSON.stringify(contexto).slice(0, 1200)}` },
     { role: 'user', content: `Lead atual permitida: ${JSON.stringify(currentLead).slice(0, 900)}` },
     ...safeHistory,

@@ -2,6 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import chatHandler, { runAssistant } from '../api/chat.js';
 import voiceTokenHandler from '../api/voice-token.js';
+import {
+  buildSpeechEngineConfiguration,
+  DEFAULT_PORTUGUESE_VOICE_ID,
+  DEFAULT_TTS_MODEL
+} from '../scripts/speech-engine-config.mjs';
 
 function responseRecorder() {
   return {
@@ -98,4 +103,23 @@ test('o token de voz rejeita pedidos de outra origem', async () => {
   else delete process.env.ELEVENLABS_API_KEY;
   if (previousEngine) process.env.ELEVENLABS_SPEECH_ENGINE_ID = previousEngine;
   else delete process.env.ELEVENLABS_SPEECH_ENGINE_ID;
+});
+
+test('o Speech Engine usa voz nativa portuguesa e um modelo multilingue', () => {
+  const config = buildSpeechEngineConfiguration({
+    wsUrl: 'wss://credicarros.vercel.app/api/voice-ws'
+  });
+
+  assert.equal(config.language, 'pt');
+  assert.equal(config.tts.voiceId, DEFAULT_PORTUGUESE_VOICE_ID);
+  assert.equal(config.tts.modelId, DEFAULT_TTS_MODEL);
+  assert.equal(config.tts.textNormalisationType, 'elevenlabs');
+  assert.ok(config.tts.stability < 0.5);
+});
+
+test('o Speech Engine rejeita o modelo Flash apenas em inglês', () => {
+  assert.throws(() => buildSpeechEngineConfiguration({
+    wsUrl: 'wss://credicarros.vercel.app/api/voice-ws',
+    ttsModel: 'eleven_flash_v2'
+  }), /só suporta inglês/);
 });

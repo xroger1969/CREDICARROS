@@ -29,7 +29,7 @@
       .replace(/\s+/g, ' ')
       .trim()
       .slice(0, 180);
-    return `Olá! Sou o assistente do Carlos. Estou aqui para ajudar com a viatura: ${vehicle}. Diga-me o que precisa.`;
+    return `Olá! Eu sou o assistente do Carlos. Vou fazer-te algumas perguntas rápidas para perceber o que precisas e ajudar o Carlos a responder mais depressa. Estamos a falar da viatura: ${vehicle}. Por onde queres começar?`;
   }
 
   async function getConversationToken() {

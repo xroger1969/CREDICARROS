@@ -47,11 +47,14 @@ function getState(session) {
 }
 
 function extractVehicle(transcript) {
-  const marker = 'Estou aqui para ajudar com a viatura:';
-  const greeting = transcript.find((item) => item.role === 'agent' && item.content.includes(marker));
+  const markers = ['Estamos a falar da viatura:', 'Estou aqui para ajudar com a viatura:'];
+  const greeting = transcript.find((item) => (
+    item.role === 'agent' && markers.some((marker) => item.content.includes(marker))
+  ));
   if (!greeting) return '';
+  const marker = markers.find((candidate) => greeting.content.includes(candidate));
   const afterMarker = greeting.content.split(marker)[1] || '';
-  return cleanText(afterMarker.split(/\.\s*(?:Diga-me|Como posso)/i)[0], 180);
+  return cleanText(afterMarker.split(/\.\s*(?:Diga-me|Como posso|Por onde)/i)[0], 180);
 }
 
 const server = createServer((_req, res) => {

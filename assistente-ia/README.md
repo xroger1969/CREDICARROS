@@ -28,9 +28,11 @@ Adicionar em **Settings → Environment Variables**:
 ```text
 ELEVENLABS_API_KEY=chave_privada_guardada_apenas_na_vercel
 ELEVENLABS_SPEECH_ENGINE_ID=seng_...
+ELEVENLABS_VOICE_ID=RROBrqjHiRb8zmRgGV11
+ELEVENLABS_TTS_MODEL=eleven_flash_v2_5
 ```
 
-A primeira variável é secreta. Nunca deve ser colocada no HTML, no JavaScript do navegador, no GitHub ou enviada por mensagem.
+A primeira variável é secreta. Nunca deve ser colocada no HTML, no JavaScript do navegador, no GitHub ou enviada por mensagem. As duas últimas são opcionais: os valores apresentados já são usados por defeito.
 
 ### Criar o Speech Engine uma vez
 
@@ -49,14 +51,14 @@ O comando usa por defeito:
 wss://credicarros.vercel.app/api/voice-ws
 ```
 
-Para outro domínio, definir `PUBLIC_WS_URL` antes do comando. Para escolher uma voz específica, pode também ser definida `ELEVENLABS_VOICE_ID`.
+Para outro domínio, definir `PUBLIC_WS_URL` antes do comando. A configuração usa por defeito uma voz masculina nativa de Portugal, adequada a atendimento comercial, com o modelo multilingue de baixa latência `eleven_flash_v2_5`. Outra voz ou modelo podem ser escolhidos com `ELEVENLABS_VOICE_ID` e `ELEVENLABS_TTS_MODEL`.
 
 4. Copiar apenas o valor `seng_...` apresentado pelo comando para `ELEVENLABS_SPEECH_ENGINE_ID` na Vercel.
 5. Fazer novo deploy e confirmar que o botão mostra **Falar com o assistente**.
 
 O projeto da Vercel deve ter **Fluid Compute** ativo para aceitar WebSockets. A conversa escrita continua a funcionar normalmente quando a voz ainda não está configurada ou quando o utilizador não autoriza o microfone.
 
-A configuração criada pelo comando limita cada conversa a quatro minutos, não grava a voz e pede à ElevenLabs para eliminar áudio, transcrição e dados pessoais após o período mínimo configurado de um dia.
+A configuração criada pelo comando limita cada conversa a quatro minutos, não grava a voz e pede à ElevenLabs para eliminar áudio, transcrição e dados pessoais após o período mínimo configurado de um dia. O ritmo e a estabilidade foram afinados para uma conversa mais humana, sem perder clareza comercial.
 
 ## Uso recomendado
 
