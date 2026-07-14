@@ -67,5 +67,5 @@ window.addEventListener('orientationchange',()=>{viewportMax=0;setTimeout(syncVi
 input.addEventListener('focus',()=>setTimeout(syncViewport,80));
 input.addEventListener('blur',()=>setTimeout(syncViewport,120));
 syncViewport();
-if(contexto.viatura){add('Olá! 👋 Vi que estás interessado nesta viatura: '+contexto.viatura+'\nComo posso ajudar?','bot');placeQuickInChat()}else{add('Vamos começar pelas viaturas disponíveis. 🚗','bot');loadStock()}
+if(contexto.viatura){add('Olá! 👋 Vi que estás interessado nesta viatura: '+contexto.viatura+'\nComo posso ajudar?','bot');placeQuickInChat()}else{add('Olá! 👋 Vamos encontrar a viatura certa para ti.','bot');loadStock()}
 updateQuick();updateSend();
