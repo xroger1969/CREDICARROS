@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simulador-version" content="2026-07-19-ano-viatura" />
+  <meta name="simulador-version" content="2026-07-19-prazo-12" />
   <title>Simulador Crédito Automóvel</title>
   <style>
     :root {
@@ -465,11 +465,11 @@
         <div class="section green">
           <div class="section-head">
             <h2>Em quantos meses</h2>
-            <div class="sub" id="prazoSub">De 60 a 120 meses</div>
+            <div class="sub" id="prazoSub">De 12 a 120 meses</div>
           </div>
           <div class="control slider-wrap">
             <button type="button" onclick="stepPrazo(-1)">−</button>
-            <input type="range" id="prazo" min="60" max="120" step="1" value="120" />
+            <input type="range" id="prazo" min="12" max="120" step="1" value="120" />
             <button type="button" onclick="stepPrazo(1)">+</button>
             <div class="value" id="prazoLabel">120 MESES<small>10 anos</small></div>
           </div>
@@ -536,7 +536,7 @@
   </div>
 
   <script>
-    const PRAZO_MIN = 60;
+    const PRAZO_MIN = 12;
     const PRAZO_MAX = 120;
     const MONTANTE_MIN = 2500;
     const MONTANTE_MAX = 75000;
@@ -593,6 +593,14 @@
 
     // Condições Cetelem para automóvel usado, verificadas em 19-07-2026.
     function getTanConfig(meses, montante) {
+      if (meses <= 24) {
+        return { displayTan: 0.0950, calcTan: 0.0950 };
+      }
+
+      if (meses <= 48) {
+        return { displayTan: 0.0990, calcTan: 0.09904 };
+      }
+
       if (meses <= 71) {
         return { displayTan: 0.1000, calcTan: 0.1000 };
       }
@@ -672,7 +680,7 @@
 
       const maxMeses = getPrazoMax(montante, ano);
       if (maxMeses < PRAZO_MIN) {
-        return 'O ano da viatura não permite um financiamento entre 60 e 120 meses.';
+        return 'O ano da viatura não permite um financiamento entre ' + PRAZO_MIN + ' e ' + PRAZO_MAX + ' meses.';
       }
 
       if (meses > maxMeses) {
@@ -747,7 +755,7 @@
       if (!montanteValido) {
         prazoSub.textContent = 'Indique um financiamento entre 2.500 € e 75.000 €';
       } else if (!prazoDisponivel) {
-        prazoSub.textContent = 'Ano ' + ano + ': sem prazo disponível entre 60 e 120 meses';
+        prazoSub.textContent = 'Ano ' + ano + ': sem prazo disponível entre ' + PRAZO_MIN + ' e ' + PRAZO_MAX + ' meses';
       } else {
         prazoSub.textContent = 'De ' + PRAZO_MIN + ' a ' + maxCalculado + ' meses';
       }
