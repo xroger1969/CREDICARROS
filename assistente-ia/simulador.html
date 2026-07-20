@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simulador-version" content="2026-07-19-prazo-12" />
+  <meta name="simulador-version" content="2026-07-20-sem-marca" />
   <title>Simulador Crédito Automóvel</title>
   <style>
     :root {
@@ -433,7 +433,7 @@
             <div class="field">
               <label for="anoViatura">Ano da viatura</label>
               <input type="number" id="anoViatura" step="1" inputmode="numeric" />
-              <small class="field-hint">Limite Cetelem: 15 anos no final do contrato.</small>
+              <small class="field-hint">Limite: 15 anos no final do contrato.</small>
             </div>
           </div>
         </section>
@@ -591,7 +591,7 @@
       return clamp(ano, 1900, ANO_ATUAL);
     }
 
-    // Condições Cetelem para automóvel usado, verificadas em 19-07-2026.
+    // Condições de referência para automóvel usado, verificadas em 19-07-2026.
     function getTanConfig(meses, montante) {
       if (meses <= 24) {
         return { displayTan: 0.0950, calcTan: 0.0950 };
