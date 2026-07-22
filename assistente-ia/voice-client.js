@@ -47,6 +47,57 @@
     .inline-actions button{
       flex:none;
     }
+    .option-summary{
+      width:calc(100% - 36px);
+      max-width:calc(100% - 36px)!important;
+      padding:18px!important;
+      background:#fff!important;
+      border-color:#bdd1ef!important;
+      box-shadow:0 8px 24px rgba(23,61,122,.11),0 0 0 3px rgba(11,99,246,.05)!important;
+    }
+    .option-summary-title{
+      margin-bottom:14px;
+      color:#1d2d4a;
+      font-size:19px;
+      font-weight:900;
+      line-height:1.35;
+    }
+    .option-summary-list{
+      display:grid;
+      gap:11px;
+    }
+    .option-summary-item{
+      padding:14px 15px;
+      border:1px solid #d7e3f3;
+      border-left:5px solid #0b63f6;
+      border-radius:16px;
+      background:linear-gradient(145deg,#f5f9ff,#fff);
+      box-shadow:0 4px 12px rgba(23,61,122,.06);
+    }
+    .option-summary-item strong{
+      display:block;
+      margin-bottom:6px;
+      color:#0750d0;
+      font-size:15px;
+      font-weight:950;
+      letter-spacing:.025em;
+      line-height:1.25;
+    }
+    .option-summary-item>span{
+      display:block;
+      color:#253552;
+      font-size:17px;
+      line-height:1.42;
+    }
+    .option-summary-item.finance{border-left-color:#6b52e8;background:linear-gradient(145deg,#f7f4ff,#fff)}
+    .option-summary-item.trade{border-left-color:#0a917f;background:linear-gradient(145deg,#f1fbf9,#fff)}
+    .option-summary-item.visit{border-left-color:#dc7b13;background:linear-gradient(145deg,#fff8ef,#fff)}
+    .option-summary-item.contact{
+      border-color:#8ab7ff;
+      border-left-color:#0b63f6;
+      background:linear-gradient(145deg,#eaf3ff,#fff);
+      box-shadow:0 0 0 3px rgba(11,99,246,.07);
+    }
     @media(max-width:560px){
       .msg{
         padding:14px 15px;
@@ -63,9 +114,90 @@
         border-radius:18px;
         font-size:18px;
       }
+      .option-summary{
+        width:calc(100% - 32px);
+        max-width:calc(100% - 32px)!important;
+        padding:14px!important;
+      }
+      .option-summary-title{
+        margin-bottom:12px;
+        font-size:17px;
+      }
+      .option-summary-list{
+        gap:9px;
+      }
+      .option-summary-item{
+        padding:12px 13px;
+        border-radius:14px;
+      }
+      .option-summary-item strong{
+        font-size:14px;
+      }
+      .option-summary-item>span{
+        font-size:16px;
+        line-height:1.4;
+      }
     }
   `;
   document.head.appendChild(style);
+
+  function enhanceCombinedQuestion(message) {
+    if (!message || message.dataset.optionSummaryEnhanced === 'true') return;
+    const raw = String(message.textContent || '').trim();
+    const heading = 'Perfeito. Responda numa única mensagem:';
+    if (!raw.startsWith(heading)) return;
+
+    const rows = raw.split(/\n+/).map((line) => line.trim()).filter(Boolean).slice(1);
+    if (!rows.length) return;
+
+    const details = {
+      disponibilidade: { icon: '✅', title: 'DISPONIBILIDADE', kind: 'availability' },
+      financiamento: { icon: '💳', title: 'FINANCIAMENTO', kind: 'finance' },
+      retoma: { icon: '🔄', title: 'RETOMA', kind: 'trade' },
+      'marcar visita': { icon: '📅', title: 'MARCAR VISITA', kind: 'visit' },
+      contacto: { icon: '👤', title: 'CONTACTO', kind: 'contact' }
+    };
+
+    const title = document.createElement('div');
+    title.className = 'option-summary-title';
+    title.textContent = heading;
+    const list = document.createElement('div');
+    list.className = 'option-summary-list';
+
+    rows.forEach((row) => {
+      const clean = row.replace(/^[•-]\s*/, '');
+      const separator = clean.indexOf(':');
+      if (separator < 0) return;
+      const key = clean.slice(0, separator).trim().toLowerCase();
+      const copy = clean.slice(separator + 1).trim();
+      const meta = details[key] || { icon: '•', title: key.toUpperCase(), kind: '' };
+      const item = document.createElement('div');
+      item.className = 'option-summary-item' + (meta.kind ? ' ' + meta.kind : '');
+      const strong = document.createElement('strong');
+      strong.textContent = meta.icon + ' ' + meta.title;
+      const text = document.createElement('span');
+      text.textContent = copy;
+      item.append(strong, text);
+      list.appendChild(item);
+    });
+
+    if (!list.childElementCount) return;
+    message.dataset.optionSummaryEnhanced = 'true';
+    message.classList.add('option-summary');
+    message.replaceChildren(title, list);
+  }
+
+  const summaryObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      mutation.addedNodes.forEach((node) => {
+        if (!(node instanceof HTMLElement)) return;
+        if (node.matches('.msg.bot')) enhanceCombinedQuestion(node);
+        node.querySelectorAll?.('.msg.bot').forEach(enhanceCombinedQuestion);
+      });
+    });
+  });
+  summaryObserver.observe(document.body, { childList: true, subtree: true });
+  document.querySelectorAll('.msg.bot').forEach(enhanceCombinedQuestion);
 
   const icon = voiceToggle.querySelector('.voice-icon');
   const label = voiceToggle.querySelector('.voice-label');
