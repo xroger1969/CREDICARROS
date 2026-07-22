@@ -3,247 +3,89 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#ffffff">
-<title>Assistente do Carlos | AutoValorPT</title>
-<style>
-:root{
-  --blue:#0b63f6;
-  --blue-strong:#0750d0;
-  --blue-soft:#edf4ff;
-  --green:#12a66a;
-  --text:#101828;
-  --muted:#667085;
-  --line:#e4eaf2;
-  --surface:#fff;
-  --page:#f4f7fb;
-  --yellow:#fff7d6;
-  --yellow-line:#efc84a;
-  --shadow:0 20px 60px rgba(15,35,70,.12);
-}
-*{box-sizing:border-box}
-html{background:var(--page)}
-body{margin:0;min-height:100vh;padding:18px 12px calc(18px + env(safe-area-inset-bottom));display:flex;justify-content:center;align-items:flex-start;background:radial-gradient(circle at 50% -10%,#fff 0,#f8faff 38%,var(--page) 78%);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:var(--text);font-size:16px}
-button,input,summary{font:inherit}
-button,a,summary{-webkit-tap-highlight-color:transparent}
-button{touch-action:manipulation}
-.app{width:100%;max-width:720px;background:var(--surface);border:1px solid var(--line);border-radius:30px;box-shadow:var(--shadow);overflow:hidden}
-.hidden{display:none!important}
-.topbar{min-height:62px;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #eef1f6;background:#fff}
-.brand{font-size:13px;font-weight:900;letter-spacing:.13em;color:#344054;text-transform:uppercase}
-.header-controls{display:flex;align-items:center;justify-content:flex-end;gap:8px}
-.online{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;background:#f0fbf6;color:#087a4e;font-size:11px;font-weight:800}
-.online::before{content:"";width:8px;height:8px;border-radius:50%;background:#42d392;box-shadow:0 0 0 3px #42d39226}
-.voice{min-height:34px;display:flex;align-items:center;gap:6px;margin:0;padding:5px 9px 5px 5px;border:1px solid #d7e0ed;border-radius:999px;background:#f8faff;color:#344054;font-weight:800;cursor:pointer}
-.voice:disabled{cursor:not-allowed;opacity:.68}
-.voice-icon{width:24px;height:24px;flex:0 0 24px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#fff;color:var(--blue);font-size:13px}
-.voice-copy{display:flex;flex-direction:column;min-width:0}
-.voice-label{font-size:10.5px;line-height:1;white-space:nowrap}
-.voice-status{display:none}
-.voice-indicator{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#98a2b3}
-.voice.ready .voice-indicator{background:var(--blue)}
-.voice.loading .voice-indicator{background:#efad23;animation:pulse 1s infinite}
-.voice.on,.voice.speaking{border-color:#9edfc7;background:#effbf6;color:#087a4e}
-.voice.on .voice-indicator{background:#22b573;animation:pulse 1.3s infinite}
-.voice.speaking .voice-indicator{background:var(--blue);animation:pulse .7s infinite}
-@keyframes pulse{50%{transform:scale(1.55);opacity:.45}}
-.welcome-screen{padding:46px 34px 34px;text-align:center}
-.hero-icon{width:126px;height:126px;margin:0 auto 26px;display:flex;align-items:center;justify-content:center;border-radius:34px;background:linear-gradient(145deg,#e9f2ff,#fff);border:1px solid #dbe8fb;box-shadow:0 18px 35px rgba(11,99,246,.15);overflow:hidden;transform:rotate(-2deg)}
-.hero-icon img,.active-icon img{width:100%;height:100%;display:block;object-fit:cover}
-.eyebrow{display:inline-flex;align-items:center;gap:7px;margin-bottom:11px;padding:7px 11px;border-radius:999px;background:var(--blue-soft);color:var(--blue-strong);font-size:12px;font-weight:900}
-.welcome-screen h1{max-width:560px;margin:0 auto;font-size:clamp(34px,7vw,55px);line-height:1.02;letter-spacing:-.045em}
-.welcome-screen .lead{max-width:560px;margin:17px auto 0;color:#344054;font-size:clamp(17px,3.5vw,21px);line-height:1.48}
-.session-meta{margin:14px 0 28px;color:#98a2b3;font-size:14px;font-weight:700}
-.start-btn{width:100%;min-height:68px;border:0;border-radius:22px;background:linear-gradient(135deg,#3e87f7,var(--blue));color:#fff;font-size:21px;font-weight:850;letter-spacing:-.01em;box-shadow:0 15px 30px rgba(11,99,246,.28);cursor:pointer;transition:transform .18s,box-shadow .18s}
-.start-btn:hover{transform:translateY(-1px);box-shadow:0 18px 34px rgba(11,99,246,.34)}
-.start-btn:active{transform:translateY(1px)}
-.trust-row{margin-top:24px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.trust-item{padding:12px 8px;border-radius:16px;background:#fafbfc;color:#667085;font-size:12px;font-weight:750}
-.trust-item span{display:block;margin-bottom:5px;font-size:20px}
-.welcome-note{margin:17px 0 0;color:#98a2b3;font-size:12px;line-height:1.45}
-.assistant-screen{background:#fff}
-.active-header{padding:22px 22px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #edf1f6;background:linear-gradient(180deg,#fff,#fbfdff)}
-.active-icon{width:54px;height:54px;flex:0 0 54px;display:flex;align-items:center;justify-content:center;border-radius:17px;background:var(--blue-soft);overflow:hidden;border:1px solid #d5e4f8}
-.active-copy{min-width:0;flex:1}
-.active-copy small{display:block;color:var(--blue);font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}
-.active-copy h2{margin:3px 0 2px;font-size:clamp(22px,5vw,29px);line-height:1.08;letter-spacing:-.025em}
-.active-copy p{margin:0;color:var(--muted);font-size:13px;line-height:1.35}
-.progress-dots{display:flex;gap:5px;align-self:flex-start;margin-top:6px}
-.progress-dots span{width:7px;height:7px;border-radius:50%;background:#d0d5dd}
-.progress-dots span:first-child{width:20px;border-radius:99px;background:var(--blue)}
-.chat{height:min(52vh,560px);min-height:360px;overflow:auto;padding:18px;background:linear-gradient(180deg,#f8fbff 0,#fff 32%);display:flex;flex-direction:column;gap:12px;scrollbar-color:#bfd0e8 transparent}
-.msg{max-width:88%;padding:13px 15px;border-radius:18px;line-height:1.46;white-space:pre-wrap;transition:.2s}
-.msg.bot{position:relative;align-self:flex-start;margin-left:36px;border-radius:7px 18px 18px 18px;background:#fff;border:1px solid #dce7f6;box-shadow:0 5px 16px rgba(23,61,122,.07)}
-.msg.bot::before{content:"";position:absolute;left:-39px;top:0;width:31px;height:31px;display:block;border-radius:10px;background:#eaf2ff url("./assistente-carro.svg") center/cover no-repeat;border:1px solid #d5e4f8}
-.msg.bot.latest{background:var(--yellow);border-color:var(--yellow-line);box-shadow:0 6px 18px rgba(201,154,23,.12)}
-.msg.me{align-self:flex-end;border-radius:18px 7px 18px 18px;background:linear-gradient(145deg,var(--blue),var(--blue-strong));color:#fff;box-shadow:0 5px 14px rgba(11,99,246,.2)}
-.panel{padding:14px 16px calc(16px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:#fff;box-shadow:0 -8px 24px rgba(23,61,122,.04)}
-.voice-privacy{display:block;margin:0 2px 10px;color:#98a2b3;font-size:10.5px;line-height:1.4}
-.quick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:0}
-.chat>.quick{align-self:stretch;max-width:calc(100% - 36px);margin:0 0 3px 36px;padding:10px;border-radius:18px;background:#f1f6ff;border:1px solid #d8e5f7}
-.quick button,.inline-actions button{min-height:48px;border:1px solid #d9e2ef;border-radius:15px;background:#fff;padding:11px 12px;color:#243b5a;font-size:14px;font-weight:800;cursor:pointer}
-.quick button.selected{border-color:var(--blue);background:var(--blue-soft);color:var(--blue)}
-.quick button:disabled{cursor:default;opacity:.72}
-.quick .quick-continue{grid-column:1/-1;border:0;background:linear-gradient(135deg,var(--blue),var(--blue-strong));color:#fff;box-shadow:0 8px 18px rgba(11,99,246,.22)}
-.write-toggle{width:100%;min-height:48px;border:1px solid #d8e2ef;border-radius:15px;background:#f8faff;color:#344054;font-weight:800;cursor:pointer}
-.row{display:flex;gap:9px}
-.row input{min-width:0;flex:1;border:1px solid #ccd8e8;border-radius:15px;background:#f8faff;padding:14px;font-size:16px;color:var(--text);outline:none}
-.row input:focus,.row input.answer-needed{border-color:var(--blue);background:#fff;box-shadow:0 0 0 4px rgba(11,99,246,.12)}
-.row button{border:0;border-radius:15px;padding:0 18px;background:var(--blue);color:#fff;font-weight:850;cursor:pointer;box-shadow:0 7px 16px rgba(11,99,246,.2)}
-.actions{display:grid;gap:10px;margin-top:11px}
-.actions a{display:block;text-align:center;text-decoration:none;border-radius:15px;padding:13px 15px;font-weight:850}
-.send-wa,.yes-car{background:var(--green)!important;color:#fff!important;border-color:var(--green)!important}
-.tools{border:1px solid #e2e8f0;border-radius:15px;background:#fafbfc;overflow:hidden}
-.tools summary{padding:13px 15px;color:#475467;font-size:13px;font-weight:850;cursor:pointer;list-style:none}
-.tools summary::-webkit-details-marker{display:none}
-.tools summary::after{content:"＋";float:right;color:var(--blue)}
-.tools[open] summary::after{content:"−"}
-.tool-links{display:grid;gap:8px;padding:0 10px 10px}
-.tool-links a{padding:11px 12px;font-size:13px}
-.sim-credit{background:#edf4ff;color:var(--blue);border:1px solid #d5e5ff}
-.sim-charge{background:#edfdf6;color:#08734d;border:1px solid #bde9d7}
-.stock{background:#172033;color:#fff}
-.small{margin:10px 2px 0;color:#98a2b3;font-size:10.5px;line-height:1.45}
-.inline-actions{display:flex;gap:8px;flex-wrap:wrap;margin-left:36px}
-.inline-actions button{flex:1 1 170px}
-.car-options{width:100%;display:flex;flex-direction:column;gap:9px}
-.stock-list-head{display:flex;align-items:center;justify-content:space-between;padding:2px 2px 4px;color:#344054;font-size:13px;font-weight:850}
-.stock-count{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 9px;border-radius:999px;background:var(--blue-soft);color:var(--blue);font-size:12px}
-.car-card{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 52px;min-height:72px;overflow:hidden;border:1px solid #d6e1ef;border-radius:19px;background:#fff;box-shadow:0 5px 16px rgba(11,99,246,.08)}
-.car-card::before{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:linear-gradient(180deg,var(--blue),#69a5ff);z-index:2}
-.car-card:nth-of-type(odd)::before{background:linear-gradient(180deg,#6552e8,#a18fff)}
-.car-card:nth-of-type(3n)::before{background:linear-gradient(180deg,#0a917f,#42c7b5)}
-.car-choice,.car-other{width:100%;border:0;background:transparent;padding:11px 10px 11px 13px;display:flex;align-items:center;gap:10px;text-align:left;color:var(--text);cursor:pointer}
-.car-number{width:25px;height:25px;flex:0 0 25px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:var(--blue);color:#fff;font-size:12px;font-weight:900;box-shadow:0 3px 8px rgba(11,99,246,.28)}
-.brand-logo-wrap{width:40px;height:40px;flex:0 0 40px;display:inline-flex;align-items:center;justify-content:center;border-radius:12px;background:#f8faff;border:1px solid #cfdaea;overflow:hidden}
-.brand-logo-img{width:100%;height:100%;object-fit:contain;display:block;padding:5px}
-.brand-logo-fallback{display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#e5efff;color:var(--blue);font-size:10px;font-weight:950}
-.brand-logo-fallback.visible{display:inline-flex}
-.car-copy{min-width:0;flex:1;display:flex;flex-direction:column;gap:4px}
-.car-title{font-size:14px;line-height:1.25;font-weight:850}
-.car-select{color:#667085;font-size:11.5px;font-weight:700}
-.car-details{display:flex;align-items:center;justify-content:center;border-left:1px solid #e9eef5;background:linear-gradient(145deg,var(--blue),var(--blue-strong));color:#fff;text-decoration:none;font-size:21px;font-weight:900}
-.car-other{min-height:66px;margin-top:3px;border:1px dashed #bac9de;border-radius:18px;background:#f7faff}
-.show-more{width:100%;min-height:48px;border:1px solid #cbd8ea;border-radius:16px;background:#fff;color:var(--blue);font-weight:850;cursor:pointer}
-.stock-locked{position:relative;min-height:190px;overflow:hidden;border-radius:18px}
-.stock-locked>.car-card,.stock-locked>.car-other{pointer-events:none;opacity:.35;filter:saturate(.55) blur(1px);user-select:none}
-.stock-gate{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;border:0;border-radius:18px;background:linear-gradient(145deg,var(--blue),#1748b8);color:#fff;font-weight:900}
-.stock-gate-icon{font-size:34px}.stock-gate-title{font-size:22px}.stock-gate small{font-size:12px}
-body.keyboard-open{height:var(--app-height);min-height:var(--app-height);padding:4px;align-items:stretch;overflow:hidden}
-body.keyboard-open .app{height:100%;max-height:100%;display:flex;flex-direction:column;border-radius:14px}
-body.keyboard-open .topbar,body.keyboard-open .active-header{display:none}
-body.keyboard-open .assistant-screen{height:100%;display:flex;flex-direction:column}
-body.keyboard-open .chat{height:auto!important;min-height:110px;flex:1;padding:10px 12px;gap:9px}
-body.keyboard-open .panel{flex:0 0 auto;padding:8px 9px calc(8px + env(safe-area-inset-bottom))}
-body.keyboard-open .voice-privacy,body.keyboard-open .quick,body.keyboard-open .actions,body.keyboard-open .small,body.keyboard-open .write-toggle{display:none!important}
-body.keyboard-open .row{display:flex!important;flex-direction:row;gap:7px}
-body.keyboard-open .row input{min-width:0;padding:12px;font-size:16px}
-body.keyboard-open .row button{width:auto;padding:0 16px;font-size:15px}
-@media(max-width:560px){
-  body{padding:0;background:#fff}
-  .app{max-width:none;min-height:100vh;border:0;border-radius:0;box-shadow:none}
-  .topbar{padding:12px 14px}
-  .brand{font-size:11px}
-  .online{padding:6px 8px;font-size:9.5px}
-  .voice{min-height:31px;padding:4px 7px 4px 4px}
-  .voice-label{font-size:9.5px}
-  .welcome-screen{padding:34px 22px 28px}
-  .hero-icon{width:108px;height:108px;margin-bottom:23px;border-radius:29px;font-size:54px}
-  .welcome-screen h1{font-size:39px}
-  .welcome-screen .lead{font-size:17px}
-  .session-meta{margin-bottom:23px;font-size:13px}
-  .start-btn{min-height:62px;border-radius:20px;font-size:19px}
-  .trust-row{gap:7px}
-  .trust-item{padding:10px 5px;font-size:10.5px}
-  .active-header{padding:17px 15px 15px}
-  .active-icon{width:48px;height:48px;flex-basis:48px;border-radius:15px;font-size:24px}
-  .active-copy h2{font-size:22px}
-  .active-copy p{font-size:12px}
-  .chat{height:52vh;min-height:330px;padding:14px 12px}
-  .msg{max-width:94%;padding:11px 13px;font-size:15px}
-  .msg.bot{margin-left:32px}
-  .msg.bot::before{left:-35px;width:28px;height:28px;font-size:14px}
-  .chat>.quick{max-width:calc(100% - 32px);margin-left:32px;padding:8px}
-  .quick button{min-height:46px;padding:9px 8px;font-size:12px}
-  .car-card{grid-template-columns:minmax(0,1fr) 48px;min-height:68px;border-radius:17px}
-  .car-choice{padding:9px 8px 9px 11px;gap:8px}
-  .car-number{width:23px;height:23px;flex-basis:23px}
-  .brand-logo-wrap{width:37px;height:37px;flex-basis:37px}
-  .car-title{font-size:13px}
-  .car-select{font-size:11px}
-  .car-details{font-size:19px}
-  .panel{padding:12px 12px calc(14px + env(safe-area-inset-bottom))}
-  .inline-actions{margin-left:32px}
-}
-</style>
+<meta name="theme-color" content="#f5f7fb">
+<meta name="description" content="Assistente Credicarros do Carlos Vasconcelos para escolher viaturas, esclarecer dúvidas e preparar pedidos comerciais.">
+<title>Credicarros | Assistente do Carlos</title>
+<link rel="stylesheet" href="./showroom-base.css?v=20260722-1">
+<link rel="stylesheet" href="./showroom-components.css?v=20260722-1">
+<link rel="stylesheet" href="./showroom-responsive.css?v=20260722-1">
 </head>
 <body>
 <div class="app">
   <div class="topbar">
-    <div class="brand">AutoValorPT</div>
+    <div class="brand-wrap">
+      <div class="brand-mark"><img src="./assistente-carro.svg" alt=""></div>
+      <div class="brand-copy"><strong class="brand-name">Credicarros</strong><span class="brand-sub">Assistente do Carlos Vasconcelos</span></div>
+    </div>
     <div class="header-controls">
-      <div class="online">Disponível</div>
-      <button id="voiceToggle" class="voice" type="button" aria-pressed="true" disabled>
-        <span class="voice-icon" aria-hidden="true">🔊</span>
-        <span class="voice-copy"><strong class="voice-label">Voz ligada</strong><small class="voice-status">A verificar o serviço ElevenLabs</small></span>
+      <div class="online">Assistente online</div>
+      <button id="voiceToggle" class="voice" type="button" aria-pressed="false" disabled>
+        <span class="voice-icon" aria-hidden="true">🔇</span>
+        <span class="voice-copy"><strong class="voice-label">Ativar voz</strong><small class="voice-status">A verificar o serviço ElevenLabs</small></span>
         <span class="voice-indicator" aria-hidden="true"></span>
       </button>
+      <a id="talkNow" class="human-link" href="https://wa.me/351918404101" target="_blank" rel="noopener"><span>💬</span><strong>Falar com Carlos</strong></a>
     </div>
   </div>
+
   <section id="welcomeScreen" class="welcome-screen">
-    <div class="hero-icon"><img src="./assistente-carro.svg" alt="Assistente automóvel do Carlos"></div>
+    <div class="hero-icon"><img src="./assistente-carro.svg" alt="Assistente automóvel Credicarros"></div>
     <div class="eyebrow">👋 Assistente do Carlos</div>
-    <h1>Encontre a viatura certa</h1>
-    <p class="lead">Diga-me o que procura e eu ajudo-o a escolher, esclarecer dúvidas e falar com o Carlos.</p>
-    <div class="session-meta">3 passos simples · cerca de 1 minuto</div>
-    <button id="startAssistant" class="start-btn" type="button">▶&nbsp;&nbsp;Começar</button>
-    <div class="trust-row" aria-label="Vantagens">
-      <div class="trust-item"><span>👆</span>Só precisa tocar</div>
-      <div class="trust-item"><span>🚙</span>Stock disponível</div>
-      <div class="trust-item"><span>💬</span>Resposta rápida</div>
+    <h1>Encontre a viatura certa sem complicações</h1>
+    <p class="lead">Escolha uma viatura do stock ou diga-me as suas necessidades. Eu organizo o pedido e o Carlos confirma os detalhes comerciais.</p>
+    <div class="session-meta">Percurso simples · voz opcional · sem formulários longos</div>
+    <div class="start-choices">
+      <button id="browseMode" class="start-card primary" type="button"><span class="start-card-icon">🚘</span><strong>Já sei qual viatura quero</strong><small>Veja o stock, compare até três opções e escolha a viatura.</small></button>
+      <button id="advisorMode" class="start-card" type="button"><span class="start-card-icon">✨</span><strong>Ajude-me a escolher</strong><small>Responda a quatro perguntas rápidas e receba sugestões do stock.</small></button>
     </div>
-    <p class="welcome-note">Sem formulários longos. Pode escolher por botões e escrever apenas quando for necessário.</p>
+    <div class="trust-row" aria-label="Vantagens"><div class="trust-item"><span>👆</span>Botões grandes</div><div class="trust-item"><span>🔒</span>Sem promessas automáticas</div><div class="trust-item"><span>💬</span>Contacto direto</div></div>
+    <p class="welcome-note">Disponibilidade, preço final, retoma, equipamento, garantia e condições de financiamento são sempre confirmados pelo Carlos.</p>
   </section>
+
   <section id="assistantScreen" class="assistant-screen hidden">
     <header class="active-header">
       <div class="active-icon" aria-hidden="true"><img src="./assistente-carro.svg" alt=""></div>
-      <div class="active-copy">
-        <small>Assistente do Carlos</small>
-        <h2 id="assistantTitle">Escolha uma viatura</h2>
-        <p id="assistantSubtitle">Toque numa opção para continuar.</p>
+      <div class="active-copy"><small>Assistente do Carlos</small><h2 id="assistantTitle">Escolha uma viatura</h2><p id="assistantSubtitle">Toque numa opção para continuar.</p></div>
+      <div class="header-actions">
+        <button id="backButton" class="icon-btn hidden" type="button" aria-label="Voltar">←<span class="icon-btn-label">Voltar</span></button>
+        <button id="restartButton" class="icon-btn danger" type="button" aria-label="Recomeçar">↻<span class="icon-btn-label">Recomeçar</span></button>
       </div>
-      <div class="progress-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="progress-wrap" role="progressbar" aria-label="Progresso do pedido" aria-valuemin="1" aria-valuemax="4" aria-valuenow="1"><div class="progress-track"><div id="progressBar" class="progress-bar"></div></div><span id="progressText" class="progress-text">Passo 1 de 4</span></div>
     </header>
-    <div id="chat" class="chat" aria-live="polite"></div>
-    <div class="panel">
-      <small id="voicePrivacy" class="voice-privacy hidden">A ElevenLabs gera apenas a voz das respostas. O microfone não é utilizado.</small>
-      <div class="quick hidden">
-        <button data-key="disponibilidade">✅ Disponibilidade</button>
-        <button data-key="financiamento">💳 Financiamento</button>
-        <button data-key="retoma">🔄 Retoma</button>
-        <button data-key="visita">📅 Marcar visita</button>
-        <button id="quickContinue" class="quick-continue hidden" type="button">Continuar com as opções →</button>
-      </div>
-      <button id="showWriter" class="write-toggle" type="button">✎&nbsp;&nbsp;Escrever uma mensagem</button>
-      <form id="form" class="row hidden">
-        <input id="input" placeholder="Escreva a sua mensagem..." autocomplete="off" enterkeyhint="send">
-        <button type="submit">Enviar</button>
-      </form>
-      <div class="actions">
-        <a id="sendLead" class="send-wa hidden" href="#" target="_blank" rel="noopener">Enviar pedido para o Carlos</a>
-        <details class="tools">
-          <summary>Ferramentas e simuladores</summary>
-          <div class="tool-links">
-            <a class="sim-credit" href="./simulador-ano.html?v=20260719-2" target="_blank" rel="noopener">Simulador de crédito</a>
-            <a class="sim-charge" href="https://xroger1969.github.io/CARREGADOR/" target="_blank" rel="noopener">Simulador de carregamento elétrico</a>
-            <a class="stock" href="https://spremium.standvirtual.com/inventory" target="_blank" rel="noopener">Ver stock completo</a>
+
+    <div class="workspace">
+      <div class="conversation-column">
+        <div id="chat" class="chat" aria-live="polite"></div>
+        <div class="panel">
+          <small id="voicePrivacy" class="voice-privacy hidden">A ElevenLabs gera apenas a voz das respostas. O microfone não é utilizado.</small>
+          <button id="showWriter" class="write-toggle" type="button">✎&nbsp;&nbsp;Escrever uma mensagem</button>
+          <form id="form" class="row hidden"><label class="sr-only" for="input">Mensagem</label><input id="input" placeholder="Escreva a sua mensagem..." autocomplete="off" enterkeyhint="send"><button type="submit">Enviar</button></form>
+          <div class="actions">
+            <a id="sendLead" class="send-wa hidden" href="#" target="_blank" rel="noopener">Enviar pedido para o Carlos</a>
+            <details class="tools"><summary>Ferramentas e simuladores</summary><div class="tool-links"><a class="sim-credit" href="./simulador-ano.html?v=20260719-2" target="_blank" rel="noopener">Simulador de crédito</a><a class="sim-charge" href="https://xroger1969.github.io/CARREGADOR/" target="_blank" rel="noopener">Simulador de carregamento elétrico</a><a class="stock" href="https://spremium.standvirtual.com/inventory" target="_blank" rel="noopener">Ver stock completo</a></div></details>
           </div>
-        </details>
+          <div class="small">Os dados do pedido ficam guardados neste dispositivo durante 24 horas para poder retomar a conversa. Não introduza NIF, IBAN, documentos ou dados bancários.</div>
+        </div>
       </div>
-      <div class="small">Disponibilidade, equipamento, despesas, garantia, financiamento, carregamento e preço final carecem de confirmação com o gestor comercial.</div>
+
+      <aside class="side-panel" aria-label="Resumo do pedido">
+        <div id="selectedVehicleCard" class="side-card"><div class="empty-state"><div class="empty-state-icon">🚘</div><strong>Nenhuma viatura escolhida</strong><p>Escolha uma viatura ou peça sugestões para ver aqui o resumo.</p></div></div>
+        <div class="side-card"><div class="side-card-body"><span class="side-label">Pedido</span><h3>Resumo dos dados</h3><div id="leadSummary" class="lead-summary"><p>Ainda não existem dados para mostrar.</p></div><div class="side-actions"><button id="reviewData" type="button">✎ Rever dados</button><a id="sideWhatsApp" href="https://wa.me/351918404101" target="_blank" rel="noopener">💬 Falar com o Carlos</a></div></div></div>
+      </aside>
     </div>
   </section>
 </div>
+
+<div id="compareBar" class="compare-bar hidden"><div><strong id="compareCount">0 viaturas selecionadas</strong><small>Compare até três viaturas.</small></div><button id="openCompare" type="button">Comparar</button></div>
+
+<dialog id="compareDialog"><div class="dialog-head"><h2>Comparar viaturas</h2><button class="dialog-close" type="button" data-close-dialog="compareDialog" aria-label="Fechar">✕</button></div><div class="dialog-body"><div id="compareGrid" class="compare-grid"></div></div></dialog>
+
+<dialog id="reviewDialog"><div class="dialog-head"><h2>Rever dados do pedido</h2><button class="dialog-close" type="button" data-close-dialog="reviewDialog" aria-label="Fechar">✕</button></div><div class="dialog-body"><form id="reviewForm" class="review-form"><div class="field"><label for="reviewName">Nome</label><input id="reviewName" autocomplete="name"></div><div class="field"><label for="reviewPhone">Contacto/WhatsApp</label><input id="reviewPhone" inputmode="tel" autocomplete="tel"></div><div class="field full"><label for="reviewFinance">Financiamento / entrada / prestação pretendida</label><input id="reviewFinance"></div><div class="field full"><label for="reviewTrade">Retoma</label><input id="reviewTrade"></div><div class="field full"><label for="reviewVisit">Dia e hora preferidos</label><input id="reviewVisit"></div><div class="field full"><label for="reviewNotes">Observações</label><textarea id="reviewNotes"></textarea></div><div class="dialog-actions field full"><button type="button" data-close-dialog="reviewDialog">Cancelar</button><button class="primary" type="submit">Guardar alterações</button></div></form></div></dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script src="./voice-client.js"></script>
-<script src="./app.js"></script>
+<script src="./app-v4-core.js?v=20260722-1"></script>
+<script src="./app-v4-flow.js?v=20260722-1"></script>
+<script src="./app-v4-init.js?v=20260722-1"></script>
 </body>
 </html>
