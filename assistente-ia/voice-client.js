@@ -411,3 +411,58 @@
       setButton('', 'Voz indisponível', 'O chat escrito continua disponível', '🔇');
     });
 })();
+
+(() => {
+  function cleanLeadNameCandidate(value) {
+    const candidate = String(value || '')
+      .trim()
+      .replace(/\s+/g, ' ')
+      .replace(/^(?:o|a)\s+/i, '');
+
+    if (
+      !candidate ||
+      candidate.length > 80 ||
+      /\d|@|https?:/i.test(candidate) ||
+      /\b(?:telefone|telem[oó]vel|whatsapp|contacto|n[uú]mero|entrada|presta[cç][aã]o|retoma|diesel|gasolina|el[eé]trico|h[ií]brido|reserva|euros?|km|kms)\b/i.test(candidate)
+    ) return '';
+
+    const words = candidate.split(' ');
+    return words.length <= 5 && words.every((word) => /^[A-Za-zÀ-ÿ'’\-]+$/u.test(word))
+      ? candidate
+      : '';
+  }
+
+  function findLeadPhone(text) {
+    return String(text || '').match(/(?:\+?351\s*)?9\d{1,2}(?:[\s.\-]*\d){6}/);
+  }
+
+  function readExplicitLeadName(value) {
+    const text = String(value || '');
+    const patterns = [
+      /(?:^|[\n,;.!?]\s*|\s+)(?:(?:o\s+)?meu\s+nome|nome|cliente)\s*(?:é|e|:)\s*([^\n,;.!?]+?)(?=\s+(?:e\s+)?(?:o\s+)?(?:meu\s+)?(?:n[uú]mero|telefone|telem[oó]vel|contacto|whatsapp)\b|[\n,;.!?]|$)/iu,
+      /(?:^|[\n,;.!?]\s*|\s+)(?:o\s+)?meu\s+contacto\s*(?:é|e|:)\s*([^\n,;.!?]+?)(?=\s+(?:e\s+)?(?:o\s+)?(?:meu\s+)?(?:n[uú]mero|telefone|telem[oó]vel|whatsapp)\b|[\n,;.!?]|$)/iu,
+      /(?:^|[\n,;.!?]\s*|\s+)chamo[-\s]me\s+([^\n,;.!?]+?)(?=\s+(?:e\s+)?(?:o\s+)?(?:meu\s+)?(?:n[uú]mero|telefone|telem[oó]vel|contacto|whatsapp)\b|[\n,;.!?]|$)/iu
+    ];
+
+    for (const pattern of patterns) {
+      const candidate = cleanLeadNameCandidate(text.match(pattern)?.[1]);
+      if (candidate) return candidate;
+    }
+
+    const contact = findLeadPhone(text);
+    if (!contact) return '';
+    const before = text.slice(0, contact.index).trim();
+    const natural = before.match(/(?:^|[\d€.,;:])\s*(?:(?:km|kms|quilómetros?|quilometros?|euros?|por\s+m[eê]s)\s*)?([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-Za-zÀ-ÿ'’\-]*(?:\s+[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][A-Za-zÀ-ÿ'’\-]*){0,2})\s*$/);
+    return natural ? natural[1].trim() : '';
+  }
+
+  const installNameRecognition = () => {
+    window.explicitName = readExplicitLeadName;
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', installNameRecognition, { once: true });
+  } else {
+    setTimeout(installNameRecognition, 0);
+  }
+})();
