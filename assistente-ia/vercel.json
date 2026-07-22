@@ -3,10 +3,6 @@
     {
       "source": "/api/chat",
       "destination": "/api/chat-flex"
-    },
-    {
-      "source": "/voice-client.js",
-      "destination": "/api/voice-client-patched"
     }
   ]
 }
