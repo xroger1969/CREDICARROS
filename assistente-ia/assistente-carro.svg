@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Assistente automóvel do Carlos</title>
+  <desc id="desc">Carro azul simpático com olhos, sorriso e balão de conversa.</desc>
+  <defs>
+    <linearGradient id="bg" x1="78" y1="42" x2="438" y2="470" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#edf5ff"/>
+    </linearGradient>
+    <linearGradient id="car" x1="128" y1="193" x2="383" y2="407" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3ba6ff"/>
+      <stop offset=".48" stop-color="#1174f5"/>
+      <stop offset="1" stop-color="#0750d0"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="179" y1="198" x2="327" y2="295" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f4fcff"/>
+      <stop offset="1" stop-color="#cbefff"/>
+    </linearGradient>
+    <radialGradient id="lamp" cx="0" cy="0" r="1" gradientTransform="translate(0 0) scale(1)">
+      <stop stop-color="#fff"/>
+      <stop offset=".62" stop-color="#fff6bd"/>
+      <stop offset="1" stop-color="#ffc94a"/>
+    </radialGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="17" stdDeviation="17" flood-color="#16447f" flood-opacity=".18"/>
+    </filter>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#1a58b5" flood-opacity=".16"/>
+    </filter>
+  </defs>
+
+  <rect x="22" y="22" width="468" height="468" rx="112" fill="url(#bg)" stroke="#cfdef7" stroke-width="5"/>
+
+  <g filter="url(#soft)">
+    <path d="M340 75h79c31 0 56 25 56 56v23c0 31-25 56-56 56h-43l-31 29c-9 8-22 2-21-10l3-19c-25-6-43-29-43-56v-23c0-31 25-56 56-56Z" fill="#fff" stroke="#5c8ff1" stroke-width="7" stroke-linejoin="round"/>
+    <circle cx="350" cy="143" r="8" fill="#1478f4"/>
+    <circle cx="381" cy="143" r="8" fill="#1478f4"/>
+    <circle cx="412" cy="143" r="8" fill="#1478f4"/>
+  </g>
+
+  <g filter="url(#shadow)">
+    <ellipse cx="256" cy="421" rx="150" ry="24" fill="#a9c8f0" opacity=".42"/>
+
+    <path d="M137 269c8-63 52-108 112-108h14c60 0 104 45 112 108l29 21c17 13 27 33 27 55v39c0 18-15 33-33 33H114c-18 0-33-15-33-33v-39c0-22 10-42 27-55l29-21Z" fill="url(#car)" stroke="#0757cf" stroke-width="8" stroke-linejoin="round"/>
+
+    <path d="M159 276c9-52 42-87 89-87h16c47 0 80 35 89 87H159Z" fill="url(#glass)" stroke="#0757cf" stroke-width="8" stroke-linejoin="round"/>
+
+    <path d="M172 225c17-19 40-29 70-31" fill="none" stroke="#fff" stroke-opacity=".34" stroke-width="9" stroke-linecap="round"/>
+    <path d="M108 323c52-25 244-25 296 0" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="10" stroke-linecap="round"/>
+
+    <ellipse cx="201" cy="242" rx="21" ry="28" fill="#0b1c46"/>
+    <ellipse cx="311" cy="242" rx="21" ry="28" fill="#0b1c46"/>
+    <ellipse cx="208" cy="231" rx="7" ry="10" fill="#fff"/>
+    <ellipse cx="318" cy="231" rx="7" ry="10" fill="#fff"/>
+
+    <path d="M180 204c12-11 27-12 40-3" fill="none" stroke="#10234d" stroke-width="10" stroke-linecap="round"/>
+    <path d="M292 201c13-9 28-8 40 3" fill="none" stroke="#10234d" stroke-width="10" stroke-linecap="round"/>
+
+    <circle cx="132" cy="343" r="30" fill="url(#lamp)" stroke="#0757cf" stroke-width="7"/>
+    <circle cx="380" cy="343" r="30" fill="url(#lamp)" stroke="#0757cf" stroke-width="7"/>
+    <circle cx="123" cy="334" r="10" fill="#fff" opacity=".9"/>
+    <circle cx="371" cy="334" r="10" fill="#fff" opacity=".9"/>
+
+    <path d="M207 341c14 16 31 24 49 24s35-8 49-24c7-8 20-2 17 9-8 33-33 53-66 53s-58-20-66-53c-3-11 10-17 17-9Z" fill="#0b1c46"/>
+    <path d="M228 389c17 9 39 9 56 0-8-10-18-15-28-15s-20 5-28 15Z" fill="#ff6b78"/>
+
+    <ellipse cx="112" cy="294" rx="32" ry="23" fill="#1682f7" stroke="#0757cf" stroke-width="7"/>
+    <ellipse cx="400" cy="294" rx="32" ry="23" fill="#1682f7" stroke="#0757cf" stroke-width="7"/>
+
+    <path d="M112 407v15c0 24 19 43 43 43s43-19 43-43v-5" fill="#13264e"/>
+    <path d="M314 417v5c0 24 19 43 43 43s43-19 43-43v-15" fill="#13264e"/>
+    <ellipse cx="155" cy="421" rx="22" ry="28" fill="#8fa8ca"/>
+    <ellipse cx="357" cy="421" rx="22" ry="28" fill="#8fa8ca"/>
+    <ellipse cx="155" cy="421" rx="10" ry="16" fill="#dce9f8"/>
+    <ellipse cx="357" cy="421" rx="10" ry="16" fill="#dce9f8"/>
+  </g>
+</svg>
