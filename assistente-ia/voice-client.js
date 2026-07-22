@@ -2,6 +2,71 @@
   const voiceToggle = document.getElementById('voiceToggle');
   if (!voiceToggle) return;
 
+  const style = document.createElement('style');
+  style.id = 'ui-refinement-large-options';
+  style.textContent = `
+    .msg{
+      padding:16px 18px;
+      font-size:18px;
+      line-height:1.5;
+    }
+    .msg.bot.latest{
+      background:#fff;
+      border-color:#bdd1ef;
+      box-shadow:0 7px 20px rgba(23,61,122,.10),0 0 0 3px rgba(11,99,246,.06);
+    }
+    .quick{
+      grid-template-columns:1fr!important;
+      gap:12px!important;
+    }
+    .chat>.quick{
+      max-width:calc(100% - 36px);
+      padding:0;
+      background:transparent;
+      border:0;
+    }
+    .quick button,.inline-actions button{
+      width:100%;
+      min-height:64px;
+      padding:16px 18px;
+      border-radius:19px;
+      font-size:19px;
+      line-height:1.2;
+      text-align:left;
+      box-shadow:0 7px 18px rgba(23,61,122,.09);
+    }
+    .quick .quick-continue{
+      grid-column:auto;
+      text-align:center;
+    }
+    .inline-actions{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:12px;
+    }
+    .inline-actions button{
+      flex:none;
+    }
+    @media(max-width:560px){
+      .msg{
+        padding:14px 15px;
+        font-size:17px;
+      }
+      .chat>.quick{
+        max-width:calc(100% - 32px);
+        margin-left:32px;
+        padding:0;
+      }
+      .quick button,.inline-actions button{
+        min-height:62px;
+        padding:15px 16px;
+        border-radius:18px;
+        font-size:18px;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+
   const icon = voiceToggle.querySelector('.voice-icon');
   const label = voiceToggle.querySelector('.voice-label');
   const status = voiceToggle.querySelector('.voice-status');
@@ -10,7 +75,7 @@
   let audioContext = null;
   let source = null;
   let requestController = null;
-  let enabled = true;
+  let enabled = false;
   let configured = false;
   let unlocked = false;
   let playing = false;
@@ -34,9 +99,9 @@
     voiceToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
     voiceToggle.setAttribute('aria-label', main + '. ' + detail);
     voiceToggle.title = detail;
-    icon.textContent = symbol;
-    label.textContent = main;
-    status.textContent = detail;
+    if (icon) icon.textContent = symbol;
+    if (label) label.textContent = main;
+    if (status) status.textContent = detail;
   }
 
   function cleanForSpeech(value) {
@@ -110,7 +175,9 @@
           failed = true;
           emitSpeechState('failed', text);
           queue = [];
-          setButton('on', 'Voz ligada', 'Não foi possível ler esta resposta', '🔊');
+          enabled = false;
+          setVoiceState('off');
+          setButton('ready', 'Ativar voz', 'Não foi possível ler esta resposta', '🔇');
         }
       } finally {
         requestController = null;
@@ -130,7 +197,6 @@
       if (playing) interruptPlayback();
     }
     queue.push(text);
-    if (!configured || !unlocked) queue = queue.slice(-3);
     void playQueue();
   };
 
@@ -139,45 +205,23 @@
     return latest?.textContent || '';
   }
 
-  const interactionEvents = ['pointerdown', 'touchend', 'click', 'keydown'];
-
-  function stopWaitingForInteraction() {
-    interactionEvents.forEach((eventName) => document.removeEventListener(eventName, unlockOnInteraction, true));
-  }
-
-  function primeAudioContext() {
-    const silentBuffer = audioContext.createBuffer(1, 1, audioContext.sampleRate || 44100);
-    const silentSource = audioContext.createBufferSource();
-    silentSource.buffer = silentBuffer;
-    silentSource.connect(audioContext.destination);
-    silentSource.onended = () => silentSource.disconnect();
-    silentSource.start(0);
-  }
-
   async function unlockAudio() {
-    if (!enabled) return false;
     if (!AudioContextClass) throw new Error('Áudio não suportado.');
     if (!audioContext) audioContext = new AudioContextClass();
     if (audioContext.state !== 'running') {
-      primeAudioContext();
+      const silentBuffer = audioContext.createBuffer(1, 1, audioContext.sampleRate || 44100);
+      const silentSource = audioContext.createBufferSource();
+      silentSource.buffer = silentBuffer;
+      silentSource.connect(audioContext.destination);
+      silentSource.onended = () => silentSource.disconnect();
+      silentSource.start(0);
       await audioContext.resume();
     }
     unlocked = audioContext.state === 'running';
-    if (!unlocked) return false;
-    stopWaitingForInteraction();
-    if (configured) {
-      setButton('on', 'Voz ligada', 'As respostas serão lidas pela ElevenLabs', '🔊');
-      void playQueue();
-    }
-    return true;
+    return unlocked;
   }
 
-  function unlockOnInteraction(event) {
-    if (voiceToggle.contains(event.target)) return;
-    void unlockAudio().catch(() => {});
-  }
-
-  interactionEvents.forEach((eventName) => document.addEventListener(eventName, unlockOnInteraction, true));
+  setButton('ready', 'Ativar voz', 'A voz é opcional. Toque para ouvir as respostas', '🔇');
 
   voiceToggle.addEventListener('click', async () => {
     if (!configured) return;
@@ -187,13 +231,13 @@
       queue = [];
       stopPlayback();
       setVoiceState('off');
-      setButton('ready', 'Voz desligada', 'Toque para ouvir as respostas', '🔇');
+      setButton('ready', 'Ativar voz', 'A voz é opcional. Toque para ouvir as respostas', '🔇');
       return;
     }
 
     try {
-      enabled = true;
       if (!await unlockAudio()) throw new Error('Áudio bloqueado.');
+      enabled = true;
       setVoiceState('ready');
       setButton('on', 'Voz ligada', 'As respostas serão lidas pela ElevenLabs', '🔊');
       window.queueAssistantSpeech(latestAssistantMessage());
@@ -208,7 +252,6 @@
     enabled = false;
     queue = [];
     stopPlayback();
-    stopWaitingForInteraction();
     audioContext?.close().catch(() => {});
   });
 
@@ -217,16 +260,15 @@
     .then((data) => {
       configured = Boolean(data.configured);
       voiceToggle.disabled = !configured;
-      privacy.classList.toggle('hidden', !configured);
+      privacy?.classList.toggle('hidden', !configured);
       if (configured) {
-        setVoiceState('ready');
-        setButton('on', 'Voz ligada', unlocked ? 'As respostas serão lidas pela ElevenLabs' : 'O som começa no primeiro toque', '🔊');
-        void unlockAudio().catch(() => {});
+        setVoiceState('off');
+        setButton('ready', 'Ativar voz', 'A voz é opcional. Toque para ouvir as respostas', '🔇');
       } else {
         enabled = false;
         queue = [];
         setVoiceState('unavailable');
-        setButton('', 'Voz em preparação', 'O chat escrito continua disponível', '🔇');
+        setButton('', 'Voz indisponível', 'O chat escrito continua disponível', '🔇');
       }
     })
     .catch(() => {
