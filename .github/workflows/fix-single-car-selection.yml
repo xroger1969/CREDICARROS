@@ -1,0 +1,50 @@
+name: Corrigir seleção única de viatura
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Impedir seleção de mais de uma viatura
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('assistente-ia/app.js')
+          text = path.read_text(encoding='utf-8')
+
+          old_state = "let pendingCars=[],customLeadMode=false,awaitingCustomRequest=false,quickLeadMode=false,quickSelected=[],quickSelectionConfirmed=false,combinedDetails='',awaitingDetail='',started=false;"
+          new_state = "let pendingCars=[],customLeadMode=false,awaitingCustomRequest=false,quickLeadMode=false,quickSelected=[],quickSelectionConfirmed=false,combinedDetails='',awaitingDetail='',started=false,carSelectionLocked=false;"
+
+          old_confirm = "function confirmCar(item){pendingCars=[];customLeadMode=false;resetQuick();contexto.viatura=item.title;contexto.link_anuncio=item.url;lead={nome:'',telefone:'',viatura:item.title,orcamento:'',financiamento:'',retoma:'',horario:'',observacoes:''};hideComposer();updateQuick();updateSend();setStage('O que pretende saber?','Pode escolher uma ou várias opções.');add('Escolhi: '+item.title,'me');add('Perfeito. Escolha uma ou mais opções abaixo.','bot');placeQuickInChat()}"
+          new_confirm = "function confirmCar(item){if(carSelectionLocked)return;carSelectionLocked=true;document.querySelectorAll('.car-options').forEach(list=>list.remove());document.querySelectorAll('.inline-actions').forEach(actions=>actions.remove());pendingCars=[];customLeadMode=false;awaitingCustomRequest=false;resetQuick();contexto.viatura=item.title;contexto.link_anuncio=item.url;lead={nome:'',telefone:'',viatura:item.title,orcamento:'',financiamento:'',retoma:'',horario:'',observacoes:''};hideComposer();updateQuick();updateSend();setStage('O que pretende saber?','Pode escolher uma ou várias opções.');add('Escolhi: '+item.title,'me');add('Perfeito. Escolha uma ou mais opções abaixo.','bot');placeQuickInChat()}"
+
+          if old_state not in text:
+              raise SystemExit('Não foi encontrado o estado esperado em app.js')
+          if old_confirm not in text:
+              raise SystemExit('Não foi encontrada a função confirmCar esperada em app.js')
+
+          text = text.replace(old_state, new_state, 1)
+          text = text.replace(old_confirm, new_confirm, 1)
+          path.write_text(text, encoding='utf-8')
+
+          Path('.github/workflows/fix-single-car-selection.yml').unlink()
+
+      - name: Publicar correção
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assistente-ia/app.js .github/workflows/fix-single-car-selection.yml
+          git commit -m "Impede selecionar mais de uma viatura"
+          git push
