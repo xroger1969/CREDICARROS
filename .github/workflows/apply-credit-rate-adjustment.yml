@@ -1,0 +1,98 @@
+name: Aplicar ajuste de taxas do simulador
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/apply-credit-rate-adjustment.yml
+
+permissions:
+  contents: write
+
+jobs:
+  update-simulator:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obter repositório
+        uses: actions/checkout@v4
+
+      - name: Ajustar TAN e validar prestações
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import math
+          import statistics
+
+          paths = [
+              Path('index.html'),
+              Path('assistente-ia/simulador-ano.html'),
+          ]
+
+          replacements = [
+              ('content="2026-07-20-sem-marca"', 'content="2026-07-23-ajuste-tan-20e"'),
+              ("const TAXA_SELO_JUROS = 0.04;", "const TAXA_SELO_JUROS = 0.04;\n    const AJUSTE_TAN = 0.0215;"),
+              ("const TAXAS_ATUALIZADAS_EM = '2026-07-19';", "const TAXAS_ATUALIZADAS_EM = '2026-07-23';"),
+              ('// Condições de referência para automóvel usado, verificadas em 19-07-2026.', '// Condições-base de referência para automóvel usado, com ajuste TAN de +2,15 p.p. em 23-07-2026.'),
+              ('return { displayTan: 0.0950, calcTan: 0.0950 };', 'return { displayTan: 0.0950 + AJUSTE_TAN, calcTan: 0.0950 + AJUSTE_TAN };'),
+              ('return { displayTan: 0.0990, calcTan: 0.09904 };', 'return { displayTan: 0.0990 + AJUSTE_TAN, calcTan: 0.09904 + AJUSTE_TAN };'),
+              ('return { displayTan: 0.1000, calcTan: 0.1000 };', 'return { displayTan: 0.1000 + AJUSTE_TAN, calcTan: 0.1000 + AJUSTE_TAN };'),
+              ('? { displayTan: 0.1210, calcTan: 0.120965 }', '? { displayTan: 0.1210 + AJUSTE_TAN, calcTan: 0.120965 + AJUSTE_TAN }'),
+              (': { displayTan: 0.1025, calcTan: 0.1025 };', ': { displayTan: 0.1025 + AJUSTE_TAN, calcTan: 0.1025 + AJUSTE_TAN };'),
+              ('return { displayTan: 0.1215, calcTan: 0.12154 };', 'return { displayTan: 0.1215 + AJUSTE_TAN, calcTan: 0.12154 + AJUSTE_TAN };'),
+              ('return { displayTan: 0.1010, calcTan: 0.10096 };', 'return { displayTan: 0.1010 + AJUSTE_TAN, calcTan: 0.10096 + AJUSTE_TAN };'),
+          ]
+
+          for path in paths:
+              text = path.read_text(encoding='utf-8')
+              for old, new in replacements:
+                  count = text.count(old)
+                  if count != 1:
+                      raise RuntimeError(f'{path}: esperado 1 ocorrência, encontradas {count}: {old}')
+                  text = text.replace(old, new, 1)
+              path.write_text(text, encoding='utf-8')
+
+          TAXA_SELO_JUROS = 0.04
+          AJUSTE_TAN = 0.0215
+
+          def base_tan(meses, montante):
+              if meses <= 24:
+                  return 0.0950
+              if meses <= 48:
+                  return 0.09904
+              if meses <= 71:
+                  return 0.1000
+              if meses <= 82:
+                  return 0.120965 if montante < 12500 else 0.1025
+              if meses <= 84 and montante < 12500:
+                  return 0.12154
+              return 0.10096
+
+          def pmt(tan, meses, montante):
+              taxa_mensal = (tan / 12) * (1 + TAXA_SELO_JUROS)
+              fator = (1 + taxa_mensal) ** meses
+              return montante * ((taxa_mensal * fator) / (fator - 1))
+
+          diferencas = []
+          for montante in (10000, 12500, 15000, 17500, 20000, 25000):
+              for meses in (60, 72, 84, 96, 120):
+                  taxa = base_tan(meses, montante)
+                  diferencas.append(pmt(taxa + AJUSTE_TAN, meses, montante) - pmt(taxa, meses, montante))
+
+          media = statistics.mean(diferencas)
+          if not 19.5 <= media <= 20.5:
+              raise RuntimeError(f'Aumento médio fora do objetivo: {media:.2f} €')
+
+          print(f'Aumento médio validado: {media:.2f} €')
+          PY
+
+      - name: Publicar alteração
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html assistente-ia/simulador-ano.html
+          git commit -m "Ajusta prestações em cerca de 20 euros"
+          git push
