@@ -7,6 +7,10 @@
     {
       "source": "/voice-client.js",
       "destination": "/api/voice-client-patched"
+    },
+    {
+      "source": "/app.js",
+      "destination": "/api/app-client-patched"
     }
   ]
 }
