@@ -1,12 +1,19 @@
 {
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/chat",
-      "destination": "/api/chat-flex"
+      "src": "/api/chat",
+      "dest": "/api/chat-flex"
     },
     {
-      "source": "/voice-client.js",
-      "destination": "/api/voice-client-patched"
+      "src": "/voice-client\\.js",
+      "dest": "/api/voice-client-patched"
+    },
+    {
+      "src": "/app\\.js",
+      "dest": "/api/app-client-patched"
+    },
+    {
+      "handle": "filesystem"
     }
   ]
 }
