@@ -12,7 +12,7 @@ Bot comercial com IA para qualificar leads de viaturas.
 
 ```text
 OPENAI_API_KEY=colocar_a_tua_chave_da_OpenAI
-OPENAI_MODEL=gpt-5.5
+OPENAI_MODEL=gpt-6-astra
 ```
 
 6. Fazer Deploy.
