@@ -146,8 +146,9 @@ export async function runFlexibleCommercialAssistant(body = {}, options = {}) {
       'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || 'gpt-5.5',
-      max_output_tokens: 360,
+      model: process.env.OPENAI_MODEL || 'gpt-6-astra',
+      reasoning: { effort: 'low' },
+      max_output_tokens: 3072,
       input: [
         { role: 'system', content: FLEX_SYSTEM_PROMPT },
         { role: 'user', content: `Contexto da viatura/anúncio: ${JSON.stringify(context).slice(0, 1000)}` },
@@ -162,6 +163,7 @@ export async function runFlexibleCommercialAssistant(body = {}, options = {}) {
   const data = await response.json();
   if (!response.ok) throw new Error(data.error?.message || 'Erro no serviço de IA.');
 
+  console.info('AI model response', { requestedModel: process.env.OPENAI_MODEL || 'gpt-6-astra', actualModel: data.model || null, status: data.status || null });
   let reply = clean(extractOutputText(data), 700);
   if (!reply) throw new Error('Resposta vazia.');
   if (replyHasSensitiveCommitment(reply, message)) reply = safeGuardrailReply();

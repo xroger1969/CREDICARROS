@@ -413,9 +413,10 @@ export async function runAssistant(body = {}, options = {}) {
       'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || 'gpt-5.5',
+      model: process.env.OPENAI_MODEL || 'gpt-6-astra',
+      reasoning: { effort: 'low' },
       input,
-      max_output_tokens: 520,
+      max_output_tokens: 3072,
       text: {
         format: {
           type: 'json_schema',
@@ -433,6 +434,7 @@ export async function runAssistant(body = {}, options = {}) {
     throw new AssistantRequestError(data.error?.message || 'Erro na OpenAI API.', response.status);
   }
 
+  console.info('AI model response', { requestedModel: process.env.OPENAI_MODEL || 'gpt-6-astra', actualModel: data.model || null, status: data.status || null });
   const parsed = parseModelJson(data);
   return validateModelPayload(parsed, currentLead, message);
 }
