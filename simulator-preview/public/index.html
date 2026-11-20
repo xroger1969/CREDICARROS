@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="robots" content="noindex, nofollow">
+  <title>CREDICARROS · Simulador</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="CREDICARROS, início"><span class="brand-mark" aria-hidden="true">C</span>CREDICARROS</a>
+      <span class="preview-badge">Pré-visualização · uso interno</span>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">CRÉDITO AUTOMÓVEL</p>
+        <h1 id="page-title">A tua próxima simulação.</h1>
+        <p>Ajusta o valor e o prazo. Consulta a prestação e o custo total, no mesmo lugar.</p>
+      </section>
+
+      <div class="simulator-layout">
+        <form class="form-card" id="simulation-form" novalidate>
+          <div class="section-heading"><span class="section-number" aria-hidden="true">01</span><h2>Dados da viatura</h2></div>
+
+          <fieldset class="vehicle-choice">
+            <legend>Estado da viatura</legend>
+            <div class="segmented-control">
+              <label><input type="radio" name="vehicleType" value="used" checked><span>Usada</span></label>
+              <label><input type="radio" name="vehicleType" value="new"><span>Nova <small>(1.º registo)</small></span></label>
+            </div>
+          </fieldset>
+
+          <div class="money-fields">
+            <div class="field">
+              <label for="price">Preço da viatura</label>
+              <div class="money-input"><input id="price" name="price" type="number" inputmode="decimal" min="0.01" step="0.01" value="20000" autocomplete="off" aria-describedby="amount-guidance"><span aria-hidden="true">€</span></div>
+            </div>
+            <div class="field">
+              <label for="down-payment">Entrada inicial</label>
+              <div class="money-input"><input id="down-payment" name="downPayment" type="number" inputmode="decimal" min="0" step="0.01" value="0" autocomplete="off" aria-describedby="amount-guidance"><span aria-hidden="true">€</span></div>
+            </div>
+          </div>
+
+          <div class="financed-amount"><span>Montante a financiar</span><output id="amount" for="price down-payment">20.000,00 €</output></div>
+          <p class="field-hint" id="amount-guidance">A carregar os montantes disponíveis…</p>
+
+          <div class="term-section">
+            <div class="section-heading"><span class="section-number" aria-hidden="true">02</span><h2>Prazo do financiamento</h2></div>
+            <div class="term-control">
+              <button class="step-button" id="term-minus" type="button" aria-label="Reduzir o prazo em 6 meses">−</button>
+              <div class="term-value"><output for="months" id="months-label">120 <span>meses</span></output><span id="years-label">10 anos</span></div>
+              <button class="step-button" id="term-plus" type="button" aria-label="Aumentar o prazo em 6 meses">+</button>
+            </div>
+            <label class="visually-hidden" for="months">Prazo, em meses</label>
+            <input class="term-slider" id="months" name="months" type="range" min="24" max="120" step="6" value="120" aria-describedby="term-guidance">
+            <div class="range-labels" aria-hidden="true"><span id="months-min">24 meses</span><span id="months-max">120 meses</span></div>
+            <p class="field-hint" id="term-guidance">Prazo em intervalos de 6 meses.</p>
+          </div>
+
+          <div class="form-feedback" id="form-feedback" aria-live="polite"></div>
+          <button class="alternative-button" id="alternative-button" type="button" hidden></button>
+          <button class="primary-button" id="update-button" type="submit" disabled>Atualizar simulação <span aria-hidden="true">↗</span></button>
+          <p class="auto-update-note">Os resultados atualizam-se quando alteras os dados.</p>
+        </form>
+
+        <div class="results-column">
+          <section class="result-card" id="result-card" data-state="loading" aria-busy="true" aria-labelledby="result-heading">
+            <div class="result-top"><h2 id="result-heading">A tua simulação</h2><span class="status-dot" aria-hidden="true"></span></div>
+            <p class="payment-label">Prestação mensal estimada</p>
+            <p class="payment" id="payment">—</p>
+            <p class="result-summary" id="result-summary">A carregar as condições de simulação.</p>
+            <div class="rate-grid">
+              <div class="rate-item"><span>TAN</span><strong id="tan">—</strong><small>Taxa anual nominal</small></div>
+              <div class="rate-item"><span>TAEG</span><strong id="taeg">—</strong><small>Encargos efetivos anuais</small></div>
+            </div>
+            <div class="total-item"><div><span>Total a pagar</span><small>MTIC · montante total imputado ao consumidor</small></div><strong id="mtic">—</strong></div>
+            <div class="result-status" id="result-status" role="status" aria-live="polite"><span class="loading-spinner" aria-hidden="true"></span><span id="status-message">A carregar as condições…</span></div>
+          </section>
+
+          <details class="conditions-card" id="conditions">
+            <summary>Condições da simulação <span aria-hidden="true">+</span></summary>
+            <div class="conditions-body">
+              <p>Estimativa indicativa, sujeita a análise e condições da entidade financiadora.</p>
+              <dl>
+                <div><dt>Referência consultada</dt><dd id="source-name">—</dd></div>
+                <div><dt>Consulta</dt><dd id="retrieved-at">—</dd></div>
+                <div><dt>Viatura</dt><dd id="quote-vehicle">—</dd></div>
+                <div><dt>Montante e prazo</dt><dd id="quote-inputs">—</dd></div>
+              </dl>
+              <a class="source-link" id="source-link" hidden target="_blank" rel="noopener noreferrer">Conferir a referência consultada <span aria-hidden="true">↗</span></a>
+              <p class="conditions-note">A prestação, as taxas e o MTIC pertencem à mesma consulta. Esta pré-visualização não submete pedidos de crédito.</p>
+            </div>
+          </details>
+          <p class="result-footnote">O valor apresentado é uma estimativa. A aprovação e as condições finais são confirmadas pela entidade financiadora.</p>
+        </div>
+      </div>
+    </main>
+    <footer><span>CREDICARROS</span><span>Simulações de crédito automóvel</span></footer>
+  </div>
+</body>
+</html>

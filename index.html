@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="simulador-version" content="2026-07-23-ajuste-tan-20e" />
+  <meta name="simulador-version" content="2026-11-20-public-source-v1" />
   <title>Simulador Crédito Automóvel</title>
   <style>
     :root {
@@ -408,11 +408,35 @@
       .slider-wrap .value { width: 100%; }
       .summary-metrics { grid-template-columns: 1fr; }
     }
+
+    [hidden] { display: none !important; }
+    .hero .brand-name { margin: 0 0 10px; font-size: .76rem; font-weight: 750; letter-spacing: .16em; color: rgba(255,255,255,.76); }
+    .vehicle-type-field { margin-bottom: 16px; }
+    .input-feedback { margin: 0; color: #99412f; font-size: .88rem; line-height: 1.5; }
+    .input-feedback:empty { display: none; }
+    .suggestion-btn { padding: 13px 15px; min-height: 48px; border: 1px solid #d8bc8d; border-radius: 12px; color: #775327; background: #fff8ec; font-size: .86rem; line-height: 1.45; cursor: pointer; }
+    .control button:disabled { opacity: .45; cursor: default; transform: none; }
+    .quote-status { margin: 12px 0; font-size: .82rem; line-height: 1.5; color: #c8daef; }
+    .quote-status[data-state="error"] { color: #ffc7b2; }
+    .quote-status[data-state="success"] { color: #b4e7d1; }
+    .refresh-btn { border: 1px solid rgba(255,255,255,.35); border-radius: 10px; min-height: 44px; padding: 10px 16px; width: 100%; background: rgba(255,255,255,.08); color: #fff; font-size: .88rem; font-weight: 600; cursor: pointer; }
+    .refresh-btn:disabled { opacity: .45; cursor: default; }
+    .cta-btn:disabled { opacity: .5; cursor: default; }
+    .quote-details { margin-top: 15px; border-top: 1px solid rgba(255,255,255,.2); border-bottom: 1px solid rgba(255,255,255,.2); padding: 12px 0; font-size: .8rem; line-height: 1.5; }
+    .quote-details summary { cursor: pointer; font-weight: 650; }
+    .quote-details dl { margin: 12px 0; }
+    .quote-details dl > div { display: grid; grid-template-columns: 1fr 1.3fr; gap: 10px; margin: 8px 0; }
+    .quote-details dt { color: #b2cae3; }
+    .quote-details dd { margin: 0; overflow-wrap: anywhere; }
+    .quote-details p { color: #c1d5e9; }
+    .quote-details a { color: #fff; text-underline-offset: 3px; }
+    button:focus-visible, summary:focus-visible { outline: 3px solid #77b4ff; outline-offset: 3px; }
   </style>
 </head>
 <body>
   <div class="page">
     <header class="hero">
+      <p class="brand-name">CREDICARROS</p>
       <h1>Simulador de Crédito Automóvel</h1>
       <p>Configure o valor do financiamento, ajuste o prazo e obtenha uma estimativa clara da mensalidade. Uma experiência moderna, rápida e adaptada a qualquer dispositivo.</p>
     </header>
@@ -421,19 +445,23 @@
       <section class="card simulator-card">
         <section class="card form-card">
           <h3 class="card-title">Dados da simulação</h3>
+          <div class="field vehicle-type-field">
+            <label for="tipoViatura">Estado da viatura</label>
+            <select id="tipoViatura"><option value="used" selected>Usada</option><option value="new">Nova (1.º registo)</option></select>
+          </div>
           <div class="inputs">
             <div class="field">
               <label for="pvp">PVP (€)</label>
-              <input type="number" id="pvp" min="0" max="75000" step="1" />
+              <input type="number" id="pvp" min="0" step="0.01" inputmode="decimal" />
             </div>
             <div class="field">
               <label for="entrada">Entrada inicial (€)</label>
-              <input type="number" id="entrada" min="0" max="75000" step="500" />
+              <input type="number" id="entrada" min="0" step="0.01" inputmode="decimal" />
             </div>
             <div class="field">
-              <label for="anoViatura">Ano da viatura</label>
+              <label for="anoViatura">Ano da viatura (opcional)</label>
               <input type="number" id="anoViatura" step="1" inputmode="numeric" />
-              <small class="field-hint">Limite: 15 anos no final do contrato.</small>
+              <small class="field-hint">Informação para contacto. A elegibilidade da viatura é confirmada na análise.</small>
             </div>
           </div>
         </section>
@@ -441,43 +469,43 @@
         <div class="section green">
           <div class="section-head">
             <h2>O montante que preciso</h2>
-            <div class="sub">De 2.500€ até 75.000€</div>
+            <div class="sub" id="montanteRules">A carregar os montantes disponíveis…</div>
           </div>
           <div class="control">
-            <button type="button" onclick="stepMontante(-500)">−</button>
+            <button type="button" id="montanteMinus" aria-label="Reduzir o montante a financiar" disabled>−</button>
             <div class="value" id="montanteLabel">0 €</div>
-            <button type="button" onclick="stepMontante(500)">+</button>
+            <button type="button" id="montantePlus" aria-label="Aumentar o montante a financiar" disabled>+</button>
           </div>
         </div>
 
         <div class="section light">
           <div class="section-head">
-            <h2>A minha mensalidade desde</h2>
-            <div class="sub">Mensalidade mínima aplicada a esta simulação</div>
+            <h2>A minha mensalidade estimada</h2>
+            <div class="sub">Para o montante e prazo selecionados</div>
           </div>
           <div class="control">
-            <button type="button" onclick="stepPrestacao(-5)">−</button>
             <div class="value" id="prestacaoLabel">—</div>
-            <button type="button" onclick="stepPrestacao(5)">+</button>
           </div>
         </div>
 
         <div class="section green">
           <div class="section-head">
             <h2>Em quantos meses</h2>
-            <div class="sub" id="prazoSub">De 12 a 120 meses</div>
+            <div class="sub" id="prazoSub">A carregar os prazos disponíveis…</div>
           </div>
           <div class="control slider-wrap">
-            <button type="button" onclick="stepPrazo(-1)">−</button>
-            <input type="range" id="prazo" min="12" max="120" step="1" value="120" />
-            <button type="button" onclick="stepPrazo(1)">+</button>
+            <button type="button" id="prazoMinus" aria-label="Reduzir o prazo" disabled>−</button>
+            <input type="range" id="prazo" min="24" max="120" step="6" value="120" aria-label="Prazo do financiamento em meses" disabled />
+            <button type="button" id="prazoPlus" aria-label="Aumentar o prazo" disabled>+</button>
             <div class="value" id="prazoLabel">120 MESES<small>10 anos</small></div>
           </div>
         </div>
+        <p class="input-feedback" id="inputFeedback" role="status" aria-live="polite"></p>
+        <button type="button" class="suggestion-btn" id="suggestionBtn" hidden></button>
       </section>
 
       <aside>
-        <section class="card summary-card">
+        <section class="card summary-card" id="summaryCard" aria-busy="true">
           <h3 class="card-title">Resumo rápido</h3>
           <div class="summary-value">
             <span class="summary-label">Prestação estimada</span>
@@ -497,7 +525,19 @@
               <strong id="mticResumo">—</strong>
             </div>
           </div>
-          <p class="summary-hint">Valor indicativo para as condições selecionadas, com atualização automática conforme altera montante, ano da viatura e prazo.</p>
+          <p class="summary-hint">Simulação indicativa; condições sujeitas a análise e aprovação.</p>
+          <p class="quote-status" id="quoteStatus" data-state="loading" role="status" aria-live="polite">A carregar as condições de simulação…</p>
+          <button type="button" class="refresh-btn" id="refreshBtn" disabled>Atualizar valores</button>
+          <details class="quote-details">
+            <summary>Condições da simulação</summary>
+            <dl>
+              <div><dt>Referência consultada</dt><dd id="quoteSource">—</dd></div>
+              <div><dt>Data da consulta</dt><dd id="quoteRetrievedAt">—</dd></div>
+              <div><dt>Condições selecionadas</dt><dd id="quoteParameters">—</dd></div>
+            </dl>
+            <p>A prestação, a TAN, a TAEG e o MTIC correspondem à mesma consulta. Os encargos incluídos são os considerados nessa simulação de referência. A proposta final confirma os custos e condições aplicáveis.</p>
+            <a id="quoteSourceLink" target="_blank" rel="noopener noreferrer" hidden>Consultar a referência</a>
+          </details>
 
           <div class="lead-form" aria-label="Dados para contacto por WhatsApp">
             <div class="field">
@@ -514,7 +554,7 @@
             </label>
           </div>
 
-          <button class="cta-btn" id="leadBtn" type="button">Pedir contacto por WhatsApp</button>
+          <button class="cta-btn" id="leadBtn" type="button" disabled>Pedir contacto por WhatsApp</button>
         </section>
 
         <section class="card docs-info">
@@ -531,22 +571,15 @@
     </main>
 
     <section class="card note-card">
-      <p class="note">Os valores apresentados correspondem a uma simulação meramente indicativa, não constituindo proposta contratual.<br>Não estão incluídas despesas iniciais, nomeadamente ISUC, comissão de abertura, seguros de vida e encargos com a transferência de propriedade.<br>As condições apresentadas encontram-se sujeitas a análise de crédito, aprovação e eventuais atualizações das taxas e encargos aplicáveis.</p>
+      <p class="note">Os valores apresentados correspondem a uma simulação indicativa, não constituindo uma proposta aprovada ou contratual.<br>Consulte os encargos e condições no detalhe da simulação. A elegibilidade da viatura e as condições finais dependem da análise e aprovação da entidade financiadora.</p>
     </section>
   </div>
 
   <script>
-    const PRAZO_MIN = 12;
-    const PRAZO_MAX = 120;
-    const MONTANTE_MIN = 2500;
-    const MONTANTE_MAX = 75000;
-    const LIMITE_TAXA_REDUZIDA = 12500;
-    const IDADE_MAX_VIATURA_ANOS = 15;
+    const API_BASE = ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)
+      ? '' : 'https://credicarros.vercel.app';
     const ANO_ATUAL = new Date().getFullYear();
-    const TAXA_SELO_CAPITAL = 0.0176;
-    const TAXA_SELO_JUROS = 0.04;
-    const AJUSTE_TAN = 0.0215;
-    const TAXAS_ATUALIZADAS_EM = '2026-07-23';
+    const QUOTE_MAX_AGE_MS = 5 * 60 * 1000;
     const MAKE_WEBHOOK_URL = 'https://hook.eu2.make.com/h9v6hcszc1qu2cfq5uskxqnn4ebfqyhf';
     const WHATSAPP_PHONE = '351918404101';
 
@@ -562,17 +595,31 @@
     const pvp = document.getElementById('pvp');
     const entrada = document.getElementById('entrada');
     const anoViatura = document.getElementById('anoViatura');
+    const tipoViatura = document.getElementById('tipoViatura');
     const leadBtn = document.getElementById('leadBtn');
     const clienteNome = document.getElementById('clienteNome');
     const clienteTelefone = document.getElementById('clienteTelefone');
     const consentimentoWhatsApp = document.getElementById('consentimentoWhatsApp');
-
+    const refreshBtn = document.getElementById('refreshBtn');
+    const quoteStatus = document.getElementById('quoteStatus');
+    const feedback = document.getElementById('inputFeedback');
+    const suggestionBtn = document.getElementById('suggestionBtn');
+    const summaryCard = document.getElementById('summaryCard');
     const formatEUR = value => value.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' });
-    const formatPercent = (value, digits = 1) => (value * 100).toFixed(digits).replace('.', ',') + '%';
+    const dateFormatter = new Intl.DateTimeFormat('pt-PT', {
+      dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Lisbon'
+    });
 
-    function clamp(value, min, max) {
-      return Math.max(min, Math.min(max, value));
-    }
+    let products = null;
+    let currentQuote = null;
+    let pendingController = null;
+    let debounceTimer;
+    let expiryTimer;
+    let requestVersion = 0;
+    let loadingConfig = false;
+    let quotePending = false;
+    let leadSending = false;
+    let suggestionAction = null;
 
     function normalizePhone(value) {
       const digits = String(value || '').replace(/\D/g, '');
@@ -583,268 +630,321 @@
     }
 
     function getMontante() {
-      const total = Number(pvp.value || 0) - Number(entrada.value || 0);
-      return clamp(total, 0, MONTANTE_MAX);
+      if (pvp.value.trim() === '') return NaN;
+      return Math.round((Number(pvp.value) - Number(entrada.value || 0)) * 100) / 100;
     }
 
     function getAnoViatura() {
-      const ano = Math.trunc(Number(anoViatura.value || ANO_ATUAL));
-      return clamp(ano, 1900, ANO_ATUAL);
+      if (anoViatura.value.trim() === '') return null;
+      const ano = Number(anoViatura.value);
+      return Number.isInteger(ano) && ano >= 1900 && ano <= ANO_ATUAL ? ano : null;
     }
 
-    // Condições-base de referência para automóvel usado, com ajuste TAN de +2,15 p.p. em 23-07-2026.
-    function getTanConfig(meses, montante) {
-      if (meses <= 24) {
-        return { displayTan: 0.0950 + AJUSTE_TAN, calcTan: 0.0950 + AJUSTE_TAN };
+    function getLimits() {
+      return products && products[tipoViatura.value];
+    }
+
+    function validMoney(value) {
+      return Number.isFinite(value) && Math.abs(value * 100 - Math.round(value * 100)) < 0.00001;
+    }
+
+    function validateInputs() {
+      const limits = getLimits();
+      if (!limits) return { error: 'A aguardar as condições de simulação.' };
+      if (pvp.value.trim() === '') return { error: 'Indique o preço da viatura para começar.' };
+      const price = Number(pvp.value);
+      const initial = Number(entrada.value || 0);
+      if (!validMoney(price) || price <= 0 || price > 10000000) return { error: 'Indique um PVP válido, com um máximo de duas casas decimais.' };
+      if (!validMoney(initial) || initial < 0) return { error: 'A entrada deve ser igual ou superior a zero, com um máximo de duas casas decimais.' };
+      if (initial > price) return { error: 'A entrada não pode ser superior ao preço da viatura.' };
+      const amount = getMontante();
+      if (amount < limits.minAmount || amount > limits.maxAmount) {
+        return { error: 'O montante a financiar deve estar entre ' + formatEUR(limits.minAmount) + ' e ' + formatEUR(limits.maxAmount) + '.' };
       }
-
-      if (meses <= 48) {
-        return { displayTan: 0.0990 + AJUSTE_TAN, calcTan: 0.09904 + AJUSTE_TAN };
+      if (Math.round(amount * 100) % Math.round(limits.amountStep * 100) !== 0) {
+        const targetAmount = Math.floor(Math.round(amount * 100) / Math.round(limits.amountStep * 100)) * limits.amountStep;
+        const suggestedEntry = Math.round((price - targetAmount) * 100) / 100;
+        return {
+          error: 'O montante a financiar deve ser múltiplo de ' + formatEUR(limits.amountStep) + '. Os valores introduzidos não foram arredondados.',
+          suggestion: targetAmount >= limits.minAmount ? {
+            label: 'Usar entrada de ' + formatEUR(suggestedEntry) + ' · financiar ' + formatEUR(targetAmount),
+            action: () => { entrada.value = suggestedEntry.toFixed(2); updateMontante(); }
+          } : null
+        };
       }
-
-      if (meses <= 71) {
-        return { displayTan: 0.1000 + AJUSTE_TAN, calcTan: 0.1000 + AJUSTE_TAN };
+      const months = Number(prazo.value);
+      if (!Number.isInteger(months) || months < limits.minMonths || months > limits.maxMonths || (months - limits.minMonths) % limits.monthStep !== 0) {
+        return { error: 'Escolha um prazo entre ' + limits.minMonths + ' e ' + limits.maxMonths + ' meses, em intervalos de ' + limits.monthStep + ' meses.' };
       }
+      return { input: { amount, months, vehicleType: tipoViatura.value } };
+    }
 
-      if (meses <= 82) {
-        return montante < LIMITE_TAXA_REDUZIDA
-          ? { displayTan: 0.1210 + AJUSTE_TAN, calcTan: 0.120965 + AJUSTE_TAN }
-          : { displayTan: 0.1025 + AJUSTE_TAN, calcTan: 0.1025 + AJUSTE_TAN };
+    function setSuggestion(suggestion) {
+      suggestionAction = suggestion ? suggestion.action : null;
+      suggestionBtn.hidden = !suggestion;
+      suggestionBtn.textContent = suggestion ? suggestion.label : '';
+    }
+
+    function showInputValidation(validation) {
+      feedback.textContent = validation.error || '';
+      setSuggestion(validation.suggestion);
+    }
+
+    function isQuoteCurrent() {
+      const input = validateInputs().input;
+      if (!currentQuote || !input || quotePending) return false;
+      const age = Date.now() - Date.parse(currentQuote.retrievedAt);
+      return currentQuote.amount === input.amount && currentQuote.months === input.months
+        && currentQuote.vehicleType === input.vehicleType && age >= -60000 && age < QUOTE_MAX_AGE_MS;
+    }
+
+    function syncLeadButton() {
+      leadBtn.disabled = leadSending || !isQuoteCurrent();
+    }
+
+    function clearQuote() {
+      clearTimeout(expiryTimer);
+      currentQuote = null;
+      [prestacaoLabel, prestacaoResumo, tanResumo, taegResumo, mticResumo].forEach(node => { node.textContent = '—'; });
+      ['quoteSource', 'quoteRetrievedAt', 'quoteParameters'].forEach(id => { document.getElementById(id).textContent = '—'; });
+      const link = document.getElementById('quoteSourceLink');
+      link.hidden = true;
+      link.removeAttribute('href');
+      syncLeadButton();
+    }
+
+    function setStatus(state, message) {
+      quoteStatus.textContent = message;
+      quoteStatus.dataset.state = state;
+      summaryCard.setAttribute('aria-busy', state === 'loading' ? 'true' : 'false');
+    }
+
+    function cancelPending() {
+      clearTimeout(debounceTimer);
+      pendingController?.abort();
+      pendingController = null;
+      quotePending = false;
+      requestVersion += 1;
+    }
+
+    function renderInputs() {
+      const amount = getMontante();
+      montanteLabel.textContent = Number.isFinite(amount) && amount >= 0 ? formatEUR(amount) : '—';
+      const months = Number(prazo.value);
+      const years = Math.floor(months / 12);
+      const remainingMonths = months % 12;
+      const yearsText = [years ? years + ' ' + (years === 1 ? 'ano' : 'anos') : '', remainingMonths ? remainingMonths + ' meses' : ''].filter(Boolean).join(' e ');
+      prazoLabel.replaceChildren(document.createTextNode(months + ' MESES'));
+      const small = document.createElement('small');
+      small.textContent = yearsText;
+      prazoLabel.appendChild(small);
+      const limits = getLimits();
+      prazo.disabled = !limits;
+      document.getElementById('prazoMinus').disabled = !limits || months <= limits.minMonths;
+      document.getElementById('prazoPlus').disabled = !limits || months >= limits.maxMonths;
+      document.getElementById('montanteMinus').disabled = !limits || !Number.isFinite(amount) || amount <= limits.minAmount;
+      document.getElementById('montantePlus').disabled = !limits || (Number.isFinite(amount) && amount >= limits.maxAmount);
+      prazo.setAttribute('aria-valuetext', months + ' meses');
+    }
+
+    function applyLimits() {
+      const limits = getLimits();
+      if (!limits) return;
+      prazo.min = limits.minMonths;
+      prazo.max = limits.maxMonths;
+      prazo.step = limits.monthStep;
+      prazoSub.textContent = 'De ' + limits.minMonths + ' a ' + limits.maxMonths + ' meses · intervalos de ' + limits.monthStep + ' meses';
+      document.getElementById('montanteRules').textContent = 'De ' + formatEUR(limits.minAmount) + ' até ' + formatEUR(limits.maxAmount) + ' · intervalos de ' + formatEUR(limits.amountStep);
+      renderInputs();
+    }
+
+    function inputsChanged() {
+      cancelPending();
+      clearQuote();
+      renderInputs();
+      if (!products) return;
+      const validation = validateInputs();
+      showInputValidation(validation);
+      refreshBtn.disabled = !validation.input;
+      if (!validation.input) {
+        setStatus('idle', 'Preencha os dados para obter a simulação.');
+        return;
       }
+      setStatus('idle', 'Dados alterados. A preparar a consulta…');
+      debounceTimer = setTimeout(requestSimulation, 650);
+    }
 
-      if (meses <= 84 && montante < LIMITE_TAXA_REDUZIDA) {
-        return { displayTan: 0.1215 + AJUSTE_TAN, calcTan: 0.12154 + AJUSTE_TAN };
+    function updateMontante() { inputsChanged(); }
+    function updateAnoViatura() { inputsChanged(); }
+    function updatePrazo() { inputsChanged(); }
+
+    function quoteMatches(quote, input) {
+      return quote && quote.amount === input.amount && quote.months === input.months && quote.vehicleType === input.vehicleType
+        && [quote.payment, quote.tan, quote.taeg, quote.mtic].every(Number.isFinite)
+        && quote.payment > 0 && quote.tan >= 0 && quote.taeg >= 0 && quote.mtic >= input.amount
+        && ['payment', 'tan', 'taeg', 'mtic'].every(key => typeof quote.display?.[key] === 'string' && quote.display[key].length > 0 && quote.display[key].length < 70)
+        && Number.isFinite(Date.parse(quote.retrievedAt)) && typeof quote.source?.name === 'string';
+    }
+
+    function showQuote(quote) {
+      currentQuote = quote;
+      prestacaoLabel.textContent = quote.display.payment;
+      prestacaoResumo.textContent = quote.display.payment;
+      tanResumo.textContent = quote.display.tan;
+      taegResumo.textContent = quote.display.taeg;
+      mticResumo.textContent = quote.display.mtic;
+      document.getElementById('quoteSource').textContent = quote.source.name + ' · simulador público';
+      document.getElementById('quoteRetrievedAt').textContent = dateFormatter.format(new Date(quote.retrievedAt)) + ' · hora de Lisboa';
+      document.getElementById('quoteParameters').textContent = (quote.vehicleType === 'used' ? 'Viatura usada' : 'Viatura nova (1.º registo)') + ' · ' + formatEUR(quote.amount) + ' · ' + quote.months + ' meses';
+      try {
+        const url = new URL(quote.source.url);
+        if (url.protocol === 'https:' && url.hostname === 'www.credibom.pt') {
+          const link = document.getElementById('quoteSourceLink');
+          link.href = url.href;
+          link.hidden = false;
+        }
+      } catch { /* A validated quote can be shown without a link. */ }
+      setStatus('success', 'Valores consultados em ' + dateFormatter.format(new Date(quote.retrievedAt)) + '.');
+      const lifetime = QUOTE_MAX_AGE_MS - (Date.now() - Date.parse(quote.retrievedAt));
+      expiryTimer = setTimeout(() => {
+        clearQuote();
+        setStatus('idle', 'Esta consulta expirou. Atualize os valores para continuar.');
+        refreshBtn.disabled = !validateInputs().input;
+      }, Math.max(0, lifetime));
+    }
+
+    async function requestSimulation() {
+      cancelPending();
+      clearQuote();
+      const validation = validateInputs();
+      showInputValidation(validation);
+      if (!validation.input) {
+        setStatus('idle', 'Preencha os dados para obter a simulação.');
+        refreshBtn.disabled = true;
+        return;
       }
-
-      return { displayTan: 0.1010 + AJUSTE_TAN, calcTan: 0.10096 + AJUSTE_TAN };
-    }
-
-    function getPrazoMaxPorMontante(montante) {
-      if (montante < MONTANTE_MIN) return PRAZO_MAX;
-      if (montante < 5000) return 84;
-      if (montante < 10000) return 96;
-      return PRAZO_MAX;
-    }
-
-    function getPrazoMaxPorAno(ano) {
-      const idadePorAno = Math.max(0, ANO_ATUAL - ano);
-      const mesesDisponiveis = (IDADE_MAX_VIATURA_ANOS - idadePorAno) * 12;
-      return clamp(mesesDisponiveis, 0, PRAZO_MAX);
-    }
-
-    function getPrazoMax(montante, ano) {
-      return Math.min(
-        getPrazoMaxPorMontante(montante),
-        getPrazoMaxPorAno(ano),
-        PRAZO_MAX
-      );
-    }
-
-    // O imposto do selo de 4% sobre os juros integra a taxa mensal da renda.
-    function pmt(tan, meses, montante) {
-      const i = (tan / 12) * (1 + TAXA_SELO_JUROS);
-      if (i === 0) return montante / meses;
-
-      const numerador = i * Math.pow(1 + i, meses);
-      const denominador = Math.pow(1 + i, meses) - 1;
-      return montante * (numerador / denominador);
-    }
-
-    function irr(cashflows, guess = 0.01) {
-      let rate = guess;
-
-      for (let attempt = 0; attempt < 80; attempt += 1) {
-        let npv = 0;
-        let derivative = 0;
-
-        cashflows.forEach((cashflow, period) => {
-          const factor = Math.pow(1 + rate, period);
-          npv += cashflow / factor;
-          derivative += (-period * cashflow) / Math.pow(1 + rate, period + 1);
+      const input = validation.input;
+      const version = requestVersion;
+      const controller = new AbortController();
+      pendingController = controller;
+      quotePending = true;
+      refreshBtn.disabled = true;
+      syncLeadButton();
+      setStatus('loading', 'A consultar os valores para esta simulação…');
+      const timeout = setTimeout(() => controller.abort('timeout'), 30000);
+      try {
+        const response = await fetch(API_BASE + '/api/credit-simulation', {
+          method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(input), cache: 'no-store', signal: controller.signal
         });
-
-        if (Math.abs(derivative) < 1e-12) break;
-
-        const nextRate = rate - (npv / derivative);
-        if (!Number.isFinite(nextRate)) break;
-        if (Math.abs(nextRate - rate) < 1e-10) return nextRate;
-        rate = nextRate;
+        const body = await response.json();
+        if (version !== requestVersion) return;
+        if (!response.ok) {
+          const error = new Error(typeof body.error?.message === 'string' ? body.error.message : 'A consulta está temporariamente indisponível. Tente atualizar os valores.');
+          error.limits = body.error?.limits;
+          throw error;
+        }
+        if (!quoteMatches(body.quote, input)) throw new Error('Não foi possível confirmar um resultado para os dados selecionados. Atualize os valores para tentar novamente.');
+        showQuote(body.quote);
+      } catch (error) {
+        if (version !== requestVersion) return;
+        clearQuote();
+        const message = controller.signal.aborted
+          ? 'A consulta demorou mais do que o esperado. Tente atualizar os valores.'
+          : error instanceof TypeError || error instanceof SyntaxError
+            ? 'Não foi possível consultar os valores. Verifique a ligação e tente novamente.'
+            : error.message || 'A simulação está temporariamente indisponível.';
+        setStatus('error', message);
+        if (Number.isInteger(error.limits?.maxMonths) && input.months > error.limits.maxMonths && error.limits.maxMonths >= Number(prazo.min)) {
+          const max = error.limits.maxMonths;
+          setSuggestion({ label: 'Consultar o prazo de ' + max + ' meses', action: () => { prazo.value = max; updatePrazo(); } });
+        }
+      } finally {
+        clearTimeout(timeout);
+        if (version === requestVersion) {
+          quotePending = false;
+          pendingController = null;
+          refreshBtn.disabled = !validateInputs().input;
+          syncLeadButton();
+        }
       }
-
-      return NaN;
     }
 
-    function getMotivoInvalido(montante, ano, meses) {
-      if (montante < MONTANTE_MIN) {
-        return 'Indique um montante a financiar entre 2.500 € e 75.000 €.';
-      }
+    function validProduct(product) {
+      return product && ['minAmount', 'maxAmount', 'amountStep', 'minMonths', 'maxMonths', 'monthStep'].every(key => Number.isFinite(product[key]) && product[key] > 0)
+        && product.minAmount <= product.maxAmount && product.minMonths <= product.maxMonths && product.maxMonths <= 360
+        && Number.isInteger(product.minMonths) && Number.isInteger(product.maxMonths) && Number.isInteger(product.monthStep);
+    }
 
-      const maxMeses = getPrazoMax(montante, ano);
-      if (maxMeses < PRAZO_MIN) {
-        return 'O ano da viatura não permite um financiamento entre ' + PRAZO_MIN + ' e ' + PRAZO_MAX + ' meses.';
+    async function loadConfiguration() {
+      if (loadingConfig) return;
+      loadingConfig = true;
+      refreshBtn.disabled = true;
+      setStatus('loading', 'A carregar as condições de simulação…');
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
+      try {
+        const response = await fetch(API_BASE + '/api/credit-config', { headers: { 'Accept': 'application/json' }, cache: 'no-store', signal: controller.signal });
+        const body = await response.json();
+        if (!response.ok || !validProduct(body.products?.used) || !validProduct(body.products?.new)) throw new Error('Invalid configuration');
+        products = body.products;
+        applyLimits();
+        inputsChanged();
+      } catch {
+        products = null;
+        clearQuote();
+        setStatus('error', 'As condições de simulação estão temporariamente indisponíveis. Tente atualizar os valores.');
+        refreshBtn.disabled = false;
+      } finally {
+        clearTimeout(timeout);
+        loadingConfig = false;
       }
-
-      if (meses > maxMeses) {
-        return 'O prazo selecionado ultrapassa o máximo permitido para o montante e ano da viatura.';
-      }
-
-      return '';
     }
 
     function calcSimulacao() {
-      const montante = getMontante();
-      const ano = getAnoViatura();
-      const meses = Number(prazo.value);
-      const prazoMaximo = getPrazoMax(montante, ano);
-      const tanConfig = getTanConfig(meses, montante);
-      const motivoInvalido = getMotivoInvalido(montante, ano, meses);
-
-      if (motivoInvalido) {
-        return {
-          valida: false,
-          motivoInvalido,
-          montante,
-          ano,
-          meses,
-          prazoMaximo,
-          prestacao: 0,
-          tan: tanConfig.displayTan,
-          taeg: NaN,
-          mtic: 0
-        };
-      }
-
-      const prestacao = pmt(tanConfig.calcTan, meses, montante);
-      const prestacaoArredondada = Math.round(prestacao * 100) / 100;
-      const seloCapital = montante * TAXA_SELO_CAPITAL;
-      const mtic = (prestacaoArredondada * meses) + seloCapital;
-      const cashflows = [montante - seloCapital, ...Array(meses).fill(-prestacaoArredondada)];
-      const irrMensal = irr(cashflows);
-      const taeg = Number.isFinite(irrMensal) ? Math.pow(1 + irrMensal, 12) - 1 : NaN;
-
+      const valid = isQuoteCurrent();
+      const quote = valid ? currentQuote : null;
       return {
-        valida: true,
-        motivoInvalido: '',
-        montante,
-        ano,
-        meses,
-        prazoMaximo,
-        prestacao: prestacaoArredondada,
-        tan: tanConfig.displayTan,
-        taeg,
-        mtic
+        valida: valid,
+        motivoInvalido: valid ? '' : (validateInputs().error || 'Atualize os valores e aguarde a confirmação da simulação antes de pedir contacto.'),
+        montante: getMontante(), ano: getAnoViatura(), meses: Number(prazo.value),
+        prazoMaximo: quote?.limits?.maxMonths || getLimits()?.maxMonths || null,
+        prestacao: quote?.payment || 0, tan: quote?.tan ?? null, taeg: quote?.taeg ?? null, mtic: quote?.mtic || 0,
+        quote
       };
     }
 
-    function syncPrazoRange() {
-      const montante = getMontante();
-      const ano = getAnoViatura();
-      const montanteValido = montante >= MONTANTE_MIN;
-      const maxCalculado = getPrazoMax(montante, ano);
-      const prazoDisponivel = maxCalculado >= PRAZO_MIN;
-      const maxSelecionavel = montanteValido && prazoDisponivel ? maxCalculado : PRAZO_MAX;
-
-      prazo.min = PRAZO_MIN;
-      prazo.max = maxSelecionavel;
-      prazo.disabled = !montanteValido || !prazoDisponivel;
-
-      if (Number(prazo.value) > maxSelecionavel) prazo.value = maxSelecionavel;
-      if (Number(prazo.value) < PRAZO_MIN) prazo.value = PRAZO_MIN;
-
-      if (!prazoSub) return;
-
-      if (!montanteValido) {
-        prazoSub.textContent = 'Indique um financiamento entre 2.500 € e 75.000 €';
-      } else if (!prazoDisponivel) {
-        prazoSub.textContent = 'Ano ' + ano + ': sem prazo disponível entre ' + PRAZO_MIN + ' e ' + PRAZO_MAX + ' meses';
-      } else {
-        prazoSub.textContent = 'De ' + PRAZO_MIN + ' a ' + maxCalculado + ' meses';
-      }
-    }
-
-    function updateMontante() {
-      montanteLabel.textContent = formatEUR(getMontante());
-      syncPrazoRange();
-      updatePrazo();
-    }
-
-    function updateAnoViatura() {
-      syncPrazoRange();
-      updatePrazo();
-    }
-
-    function updatePrazo() {
-      const meses = Number(prazo.value);
-      const anos = Math.floor(meses / 12);
-      const mesesRestantes = meses % 12;
-      const partes = [];
-
-      if (anos > 0) partes.push(anos + ' ' + (anos === 1 ? 'ano' : 'anos'));
-      if (mesesRestantes > 0) partes.push(mesesRestantes + ' ' + (mesesRestantes === 1 ? 'mês' : 'meses'));
-
-      prazoLabel.innerHTML = meses + ' MESES<small>' + partes.join(' e ') + '</small>';
-      updatePrestacao();
-    }
-
-    function calcPrestacao() {
-      return calcSimulacao().prestacao;
-    }
-
-    function updatePrestacao() {
-      const simulacao = calcSimulacao();
-
-      if (!simulacao.valida) {
-        prestacaoLabel.textContent = '—';
-        if (prestacaoResumo) prestacaoResumo.textContent = '—';
-        if (tanResumo) tanResumo.textContent = '—';
-        if (taegResumo) taegResumo.textContent = '—';
-        if (mticResumo) mticResumo.textContent = '—';
-        return;
-      }
-
-      const formattedPrestacao = formatEUR(simulacao.prestacao);
-      prestacaoLabel.textContent = formattedPrestacao;
-      if (prestacaoResumo) prestacaoResumo.textContent = formattedPrestacao;
-      if (tanResumo) tanResumo.textContent = formatPercent(simulacao.tan, 2);
-      if (taegResumo) taegResumo.textContent = Number.isFinite(simulacao.taeg) ? formatPercent(simulacao.taeg) : '—';
-      if (mticResumo) mticResumo.textContent = formatEUR(simulacao.mtic);
+    function displayPercent(value) {
+      const parsed = Number(String(value).replace(/\s/g, '').replace('%', '').replace(',', '.'));
+      return Number.isFinite(parsed) ? parsed : null;
     }
 
     function getLeadPayload() {
       const simulacao = calcSimulacao();
+      const quote = simulacao.quote;
       const params = new URLSearchParams(window.location.search);
       const telefoneOriginal = clienteTelefone ? clienteTelefone.value.trim() : '';
       const telefoneNormalizado = normalizePhone(telefoneOriginal);
-
       return {
-        origem: 'CREDICARROS',
-        pagina: window.location.href,
-        utm_source: params.get('utm_source') || '',
-        utm_medium: params.get('utm_medium') || '',
-        utm_content: params.get('utm_content') || '',
-        fbclid: params.get('fbclid') || '',
-        brid: params.get('brid') || '',
-        cliente_nome: clienteNome ? clienteNome.value.trim() : '',
-        cliente_telemovel: telefoneOriginal,
+        origem: 'CREDICARROS', pagina: window.location.href,
+        utm_source: params.get('utm_source') || '', utm_medium: params.get('utm_medium') || '', utm_content: params.get('utm_content') || '',
+        fbclid: params.get('fbclid') || '', brid: params.get('brid') || '',
+        cliente_nome: clienteNome ? clienteNome.value.trim() : '', cliente_telemovel: telefoneOriginal,
         cliente_telemovel_normalizado: telefoneNormalizado,
         consentimento_whatsapp: Boolean(consentimentoWhatsApp && consentimentoWhatsApp.checked),
-        canal_preferido: 'WhatsApp',
-        whatsapp_api_pronto: true,
-        simulacao_valida: simulacao.valida,
-        motivo_invalido: simulacao.motivoInvalido,
-        pvp: Number(pvp.value || 0),
-        entrada: Number(entrada.value || 0),
-        montante: simulacao.montante,
-        ano_viatura: simulacao.ano,
-        prazo_meses: simulacao.meses,
-        prazo_maximo_meses: simulacao.prazoMaximo,
+        canal_preferido: 'WhatsApp', whatsapp_api_pronto: true,
+        simulacao_valida: simulacao.valida, motivo_invalido: simulacao.motivoInvalido,
+        pvp: Number(pvp.value || 0), entrada: Number(entrada.value || 0), montante: simulacao.montante,
+        ano_viatura: simulacao.ano, prazo_meses: simulacao.meses, prazo_maximo_meses: simulacao.prazoMaximo,
         prestacao_estimada: simulacao.prestacao,
-        tan_percentagem: simulacao.valida ? Number((simulacao.tan * 100).toFixed(2)) : null,
-        taeg_percentagem: simulacao.valida && Number.isFinite(simulacao.taeg)
-          ? Number((simulacao.taeg * 100).toFixed(2))
-          : null,
-        mtic: Number(simulacao.mtic.toFixed(2)),
-        taxas_atualizadas_em: TAXAS_ATUALIZADAS_EM,
+        tan_percentagem: quote ? displayPercent(quote.display.tan) : null,
+        taeg_percentagem: quote ? displayPercent(quote.display.taeg) : null,
+        tan_valor_fonte: quote?.tan ?? null, taeg_valor_fonte: quote?.taeg ?? null,
+        mtic: simulacao.mtic,
+        taxas_atualizadas_em: null,
+        condicoes_consultadas_em: quote?.retrievedAt || null,
+        fonte_simulacao: quote ? { ...quote.source } : null,
+        tipo_viatura: quote?.vehicleType || tipoViatura.value,
         criado_em: new Date().toISOString()
       };
     }
@@ -875,7 +975,6 @@
 
       return true;
     }
-
     function openWhatsApp(payload) {
       const mensagem = [
         'Olá Carlos, gostava de receber mais informações sobre esta simulação de crédito automóvel.',
@@ -886,7 +985,7 @@
         'PVP: ' + formatEUR(payload.pvp),
         'Entrada inicial: ' + formatEUR(payload.entrada),
         'Montante a financiar: ' + formatEUR(payload.montante),
-        'Ano da viatura: ' + payload.ano_viatura,
+        'Ano da viatura: ' + (payload.ano_viatura || 'Não indicado'),
         'Prazo: ' + payload.prazo_meses + ' meses',
         'Prestação estimada: ' + formatEUR(payload.prestacao_estimada),
         'TAN: ' + payload.tan_percentagem.toFixed(2).replace('.', ',') + '%',
@@ -899,7 +998,6 @@
 
       window.open('https://wa.me/' + WHATSAPP_PHONE + '?text=' + encodeURIComponent(mensagem), '_blank');
     }
-
     async function sendLeadToMake(payload) {
       if (!MAKE_WEBHOOK_URL) return false;
 
@@ -921,64 +1019,57 @@
     }
 
     async function handleLeadRequest() {
+      if (leadSending) return;
       const payload = getLeadPayload();
       if (!validateLead(payload)) return;
-
       const textoOriginal = leadBtn.textContent;
-      leadBtn.disabled = true;
+      leadSending = true;
+      syncLeadButton();
       leadBtn.textContent = 'A enviar pedido...';
-
-      await sendLeadToMake(payload);
-      openWhatsApp(payload);
-
-      leadBtn.disabled = false;
-      leadBtn.textContent = textoOriginal;
+      try {
+        await sendLeadToMake(payload);
+        openWhatsApp(payload);
+      } finally {
+        leadSending = false;
+        leadBtn.textContent = textoOriginal;
+        syncLeadButton();
+      }
     }
 
-    function stepMontante(delta) {
-      const novo = clamp(getMontante() + delta, 0, MONTANTE_MAX);
-      pvp.value = novo + Number(entrada.value || 0);
+    function stepMontante(direction) {
+      const limits = getLimits();
+      if (!limits) return;
+      const previous = getMontante();
+      const next = Number.isFinite(previous) ? previous + direction * limits.amountStep : limits.minAmount;
+      if (next < limits.minAmount || next > limits.maxAmount) return;
+      pvp.value = (next + Number(entrada.value || 0)).toFixed(2);
       updateMontante();
     }
 
-    function stepPrestacao(delta) {
-      const simulacao = calcSimulacao();
-      if (!simulacao.valida) return;
-
-      const alvo = Math.max(0, simulacao.prestacao + delta);
-      const meses = Number(prazo.value);
-      let tanConfig = getTanConfig(meses, simulacao.montante);
-      let prestacaoPorEuro = pmt(tanConfig.calcTan, meses, 1);
-      let montante = alvo / prestacaoPorEuro;
-
-      tanConfig = getTanConfig(meses, montante);
-      prestacaoPorEuro = pmt(tanConfig.calcTan, meses, 1);
-      montante = alvo / prestacaoPorEuro;
-
-      pvp.value = clamp(montante + Number(entrada.value || 0), 0, MONTANTE_MAX);
-      updateMontante();
-    }
-
-    function stepPrazo(delta) {
+    function stepPrazo(direction) {
       if (prazo.disabled) return;
-
-      const max = Number(prazo.max);
-      const novo = clamp(Number(prazo.value) + delta, PRAZO_MIN, max);
-      prazo.value = novo;
+      direction < 0 ? prazo.stepDown() : prazo.stepUp();
       updatePrazo();
     }
 
-    anoViatura.min = ANO_ATUAL - 30;
+    anoViatura.min = 1900;
     anoViatura.max = ANO_ATUAL;
-    anoViatura.value = ANO_ATUAL;
-
     pvp.addEventListener('input', updateMontante);
     entrada.addEventListener('input', updateMontante);
     anoViatura.addEventListener('input', updateAnoViatura);
+    tipoViatura.addEventListener('change', () => { applyLimits(); inputsChanged(); });
     prazo.addEventListener('input', updatePrazo);
-    if (leadBtn) leadBtn.addEventListener('click', handleLeadRequest);
-
-    updateMontante();
+    leadBtn.addEventListener('click', handleLeadRequest);
+    refreshBtn.addEventListener('click', () => { products ? requestSimulation() : loadConfiguration(); });
+    suggestionBtn.addEventListener('click', () => suggestionAction?.());
+    document.getElementById('montanteMinus').addEventListener('click', () => stepMontante(-1));
+    document.getElementById('montantePlus').addEventListener('click', () => stepMontante(1));
+    document.getElementById('prazoMinus').addEventListener('click', () => stepPrazo(-1));
+    document.getElementById('prazoPlus').addEventListener('click', () => stepPrazo(1));
+    window.addEventListener('pagehide', cancelPending);
+    renderInputs();
+    syncLeadButton();
+    loadConfiguration();
   </script>
 </body>
 </html>
