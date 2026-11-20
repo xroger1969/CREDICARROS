@@ -4,11 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#deefff" />
-  <meta name="simulador-version" content="2026-11-20-blue-glass-v2" />
+  <meta name="simulador-version" content="2026-11-20-blue-glass-neutral" />
   <meta name="description" content="Simule o financiamento do seu próximo automóvel. Escolha o montante, ajuste o prazo e consulte a mensalidade estimada." />
   <title>CREDICARROS · Simulador de crédito auto</title>
   <link rel="stylesheet" href="./simulator-ui.css?v=20261120g2" />
-  <script src="./simulator-core.js?v=20261120g2" defer></script>
+  <script src="./simulator-core.js?v=20261120g3" defer></script>
   <script src="./simulator-ui.js?v=20261120g2" defer></script>
 </head>
 <body>
@@ -71,13 +71,7 @@
         <button class="primary-btn" id="contactOpen" type="button" aria-haspopup="dialog" disabled>Pedir contacto <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <details class="info-details quote-details">
           <summary>Condições da simulação</summary>
-          <dl>
-            <div><dt>Referência consultada</dt><dd id="quoteSource">—</dd></div>
-            <div><dt>Data da consulta</dt><dd id="quoteRetrievedAt">—</dd></div>
-            <div><dt>Condições selecionadas</dt><dd id="quoteParameters">—</dd></div>
-          </dl>
-          <p>A prestação, a TAN, a TAEG e o MTIC correspondem à mesma consulta. Os encargos incluídos são os considerados nessa simulação de referência. A proposta final confirma os custos e condições aplicáveis.</p>
-          <a id="quoteSourceLink" target="_blank" rel="noopener noreferrer" hidden>Consultar a referência</a>
+          <p>Simulação indicativa, sujeita a análise e aprovação. A proposta final confirma a prestação, as taxas, os encargos e as restantes condições do financiamento.</p>
           <p class="limits-hint" id="montanteRules">A carregar os montantes disponíveis…</p>
           <p class="limits-hint" id="prazoSub">A carregar os prazos disponíveis…</p>
         </details>
