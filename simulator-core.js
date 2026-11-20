@@ -129,10 +129,6 @@ const API_BASE = ['localhost', '127.0.0.1', '[::1]'].includes(window.location.ho
       clearTimeout(expiryTimer);
       currentQuote = null;
       [prestacaoLabel, prestacaoResumo, tanResumo, taegResumo, mticResumo].forEach(node => { node.textContent = '—'; });
-      ['quoteSource', 'quoteRetrievedAt', 'quoteParameters'].forEach(id => { document.getElementById(id).textContent = '—'; });
-      const link = document.getElementById('quoteSourceLink');
-      link.hidden = true;
-      link.removeAttribute('href');
       syncLeadButton();
     }
 
@@ -216,18 +212,7 @@ const API_BASE = ['localhost', '127.0.0.1', '[::1]'].includes(window.location.ho
       tanResumo.textContent = quote.display.tan;
       taegResumo.textContent = quote.display.taeg;
       mticResumo.textContent = quote.display.mtic;
-      document.getElementById('quoteSource').textContent = quote.source.name + ' · simulador público';
-      document.getElementById('quoteRetrievedAt').textContent = dateFormatter.format(new Date(quote.retrievedAt)) + ' · hora de Lisboa';
-      document.getElementById('quoteParameters').textContent = (quote.vehicleType === 'used' ? 'Viatura usada' : 'Viatura nova (1.º registo)') + ' · ' + formatEUR(quote.amount) + ' · ' + quote.months + ' meses';
-      try {
-        const url = new URL(quote.source.url);
-        if (url.protocol === 'https:' && url.hostname === 'www.credibom.pt') {
-          const link = document.getElementById('quoteSourceLink');
-          link.href = url.href;
-          link.hidden = false;
-        }
-      } catch { /* A validated quote can be shown without a link. */ }
-      setStatus('success', 'Valores consultados em ' + dateFormatter.format(new Date(quote.retrievedAt)) + '.');
+      setStatus('success', 'Simulação atualizada em ' + dateFormatter.format(new Date(quote.retrievedAt)) + '.');
       const lifetime = QUOTE_MAX_AGE_MS - (Date.now() - Date.parse(quote.retrievedAt));
       expiryTimer = setTimeout(() => {
         clearQuote();
